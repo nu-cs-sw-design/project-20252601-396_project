@@ -1,10 +1,10 @@
-# Project: NAME
+# Project: Fast Food Ordering System (Option 1)
 
 ## Contributors
-NAME, NAME, NAME
+Xuyang Li, Irving Peng, Jenny Zhou
 
 ## Dependencies
-- LANGUAGE AND VERSION
+- LANGUAGE AND VERSION: Python
 - EXTERNAL LIBRARIES
 - ETC
 
