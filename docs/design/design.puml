@@ -1,2 +1,129 @@
 @startuml
+
+class CustomerUI {
+    +start()
+    +showWelcomeScreen()
+    +browseMenu()
+    +customizeItem()
+    +reviewOrder()
+    +orderPayment()
+}
+
+class CashierUI {
+    +start()
+    +showOrderList()
+    +searchOrder(orderID: String)
+    +orderDetails(orderID: String)
+    +orderPayment(orderID: String)
+}
+
+class KitchenUI {
+    +start()
+    +showOrderQueue()
+    +onInPreparation(orderId: String)
+    +onReady(orderId: String)
+}
+
+class ManagerUI {
+    +start()
+    +managementDashboard()
+    +addMenuItem()
+    +updateMenuItem()
+    +viewDailySalesSummary(date: Date)
+}
+
+class OrderSystem {
+    -db: Database
+
+    +startSystem(): void
+
+    +getMenuCategories(): List<String>
+    +getMenuItemsByCategory(category: String): List<MenuItem>
+    +getItemDetails(itemId: String): MenuItem
+    +createOrder(): Order
+    +addItemToOrder(orderId: String, itemId: String, quantity: int, customizations: String): void
+    +reviewOrder(orderId: String): Order
+    +editOrderItem(orderId: String, itemId: String, quantity: int, customizations: String): void
+    +removeOrderItem(orderId: String, itemId: String): void
+
+    +confirmOrder(orderId: String, paymentOption: String): void
+    +processSystemCardPayment(orderId: String, cardInfo: String): Payment
+    +markPayAtCounter(orderId: String): String
+    +completeCounterPayment(orderNumber: String, paymentMethod: String): Payment
+
+    +getOrderQueue(): List<Order>
+    +updateOrderStatus(orderId: String, status: String): void
+
+    +addNewMenuItem(name: String, price: double, category: String, description: String): MenuItem
+    +updateExistingMenuItem(itemId: String, price: double, description: String): void
+    +generateDailySalesSummary(date: Date): DailySalesSummary
+}
+
+class Order {
+    -id: String
+    -orderNumber: String
+    -items: List<OrderItem>
+    -status: String
+    -paymentStatus: String
+    -createdAt: Date
+    -totalAmount: double
+    +calculateTotal(): double
+}
+
+class OrderItem {
+    -menuItem: MenuItem
+    -quantity: int
+    -unitPrice: double
+    -customizations: String
+    +getItemTotal(): double
+}
+
+class MenuItem {
+    -id: String
+    -name: String
+    -price: double
+    -category: String
+    -description: String
+}
+
+class Payment {
+    -id: String
+    -orderId: String
+    -amount: double
+    -method: String
+    -status: String
+    -paidAt: Date
+}
+
+class DailySalesSummary {
+    -date: Date
+    -totalRevenue: double
+    -numberOfOrders: int
+    -topSellingItems: List<MenuItem>
+}
+
+class Database {
+    -connectionString: String
+    +saveOrder(order: Order): void
+    +getAllOrders(): List<Order>
+    +loadOrderByNumber(orderNumber: String): Order
+    +loadOrdersByStatus(status: String): List<Order>
+    +saveMenuItem(item: MenuItem): void
+    +loadAllMenuItems(): List<MenuItem>
+    +savePayment(payment: Payment): void
+    +loadPaymentsByDate(date: Date): List<Payment>
+}
+
+CustomerUI --> OrderSystem
+CashierUI --> OrderSystem
+KitchenUI --> OrderSystem
+ManagerUI --> OrderSystem
+OrderSystem --> Order
+OrderSystem --> MenuItem
+OrderSystem --> Payment
+OrderSystem --> DailySalesSummary
+OrderSystem --> Database
+Order *-- "many" OrderItem
+OrderItem --> MenuItem
+
 @enduml
