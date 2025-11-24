@@ -6,10 +6,9 @@
 export interface MenuItem {
   id: string;
   name: string;
-  description: string;
   price: number;
   category: string;
-  imageUrl?: string;
+  description: string;
 }
 
 // Order Types
