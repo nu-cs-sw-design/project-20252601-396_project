@@ -1,129 +1,204 @@
 @startuml
 
-class CustomerUI {
-    +start()
-    +showWelcomeScreen()
-    +browseMenu()
-    +customizeItem()
-    +reviewOrder()
-    +orderPayment()
+' Presentation Layer
+package "Presentation Layer" {
+    class CustomerUI {
+        +start()
+        +showWelcomeScreen()
+        +browseMenu()
+        +customizeItem()
+        +reviewOrder()
+        +orderPayment()
+    }
+
+    class CashierUI {
+        +start()
+        +showOrderList()
+        +showOrderDetails(orderID: String)
+        +showCounterPayment(orderID: String)
+    }
+
+    class KitchenUI {
+        +start()
+        +showOrderQueue()
+    }
+
+    class ManagerUI {
+        +start()
+        +showManagementDashboard()
+        +showDailySalesSummary(date: Date)
+    }
+
+    class CustomerAppController {
+        +startOrder()
+        +browseMenu()
+        +addItemToOrder(itemID: String, quantity: int, customizations: String)
+        +reviewCurrentOrder(): Order
+        +confirmOrder(paymentOption: String)
+        +payOnSystem(cardInfo: String)
+    }
+
+    class CashierAppController {
+        +listPendingCounterPayments(): List<Order>
+        +findOrder(orderNumber: String): Order
+        +completeCounterPayment(orderNumber: String, paymentMethod: String)
+    }
+
+    class KitchenAppController {
+        +getOrderQueue(): List<Order>
+        +markInPreparation(orderID: String)
+        +markReady(orderID: String)
+        +cancelOrder(orderID: String)
+    }
+
+    class ManagerAppController {
+        +listMenuItems(): List<MenuItem>
+        +addMenuItem(name: String, price: double, category: String, description: String)
+        +updateMenuItem(itemID: String, price: double, description: String)
+        +showDailySalesSummary(date: Date): DailySalesSummary
+    }
 }
 
-class CashierUI {
-    +start()
-    +showOrderList()
-    +searchOrder(orderID: String)
-    +orderDetails(orderID: String)
-    +orderPayment(orderID: String)
+' Application Layer
+package "Application Layer" {
+    class OrderingService {
+        +createOrder(): Order
+        +addItem(orderID: String, itemID: String, quantity: int, customizations: String)
+        +editItem(orderID: String, itemID: String, quantity: int, customizations: String)
+        +removeItem(orderID: String, itemID: String)
+        +reviewOrder(orderID: String): Order
+        +getOrderByNumber(orderNumber: String): Order
+    }
+
+    class PaymentService {
+        +confirmOrder(orderID: String, paymentOption: String)
+        +processSystemCardPayment(orderID: String, cardInfo: String): Payment
+        +markPayAtCounter(orderID: String)
+        +completeCounterPayment(orderNumber: String, paymentMethod: String): Payment
+    }
+
+    class KitchenService {
+        +getOrderQueue(): List<Order>
+        +updateOrderStatus(orderID: String, status: String)
+        +cancelOrder(orderID: String)
+    }
+
+    class MenuService {
+        +getMenuCategories(): List<String>
+        +getMenuItemsByCategory(category: String): List<MenuItem>
+        +getItemDetails(itemID: String): MenuItem
+        +addNewMenuItem(name: String, price: double, category: String, description: String): MenuItem
+        +updateExistingMenuItem(itemID: String, price: double, description: String): void
+    }
+
+    class ReportService {
+        +generateDailySalesSummary(date: Date): DailySalesSummary
+    }
 }
 
-class KitchenUI {
-    +start()
-    +showOrderQueue()
-    +onInPreparation(orderId: String)
-    +onReady(orderId: String)
+' Domain Layer
+package "Domain Layer" {
+    class Order {
+        -id: String
+        -orderNumber: String
+        -items: List<OrderItem>
+        -status: String
+        -paymentStatus: String
+        -createdAt: Date
+        -totalAmount: double
+        +calculateTotal(): double
+    }
+
+    class OrderItem {
+        -menuItem: MenuItem
+        -quantity: int
+        -unitPrice: double
+        -customizations: String
+        +getItemTotal(): double
+    }
+
+    class MenuItem {
+        -id: String
+        -name: String
+        -price: double
+        -category: String
+        -description: String
+    }
+
+    class Payment {
+        -id: String
+        -orderId: String
+        -amount: double
+        -method: String
+        -status: String
+        -paidAt: Date
+    }
+
+    class DailySalesSummary {
+        -date: Date
+        -totalRevenue: double
+        -numberOfOrders: int
+        -topSellingItems: List<MenuItem>
+    }
+
+    interface OrderInterface {
+        +save(order: Order): void
+        +findById(id: String): Order
+        +findByNumber(orderNumber: String): Order
+        +findByStatus(status: String): List<Order>
+    }
+
+    interface MenuInterface {
+        +save(item: MenuItem): void
+        +findAll(): List<MenuItem>
+        +findById(id: String): MenuItem
+        +findByCategory(category: String): List<MenuItem>
+    }
+
+    interface PaymentInterface {
+        +save(payment: Payment): void
+        +findByDate(date: Date): List<Payment>
+    }
+
+    class Database {
+        -connectionString: String
+        +executeQuery(sql: String): Object
+    }
 }
 
-class ManagerUI {
-    +start()
-    +managementDashboard()
-    +addMenuItem()
-    +updateMenuItem()
-    +viewDailySalesSummary(date: Date)
-}
-
-class OrderSystem {
-    -db: Database
-
-    +startSystem(): void
-
-    +getMenuCategories(): List<String>
-    +getMenuItemsByCategory(category: String): List<MenuItem>
-    +getItemDetails(itemId: String): MenuItem
-    +createOrder(): Order
-    +addItemToOrder(orderId: String, itemId: String, quantity: int, customizations: String): void
-    +reviewOrder(orderId: String): Order
-    +editOrderItem(orderId: String, itemId: String, quantity: int, customizations: String): void
-    +removeOrderItem(orderId: String, itemId: String): void
-
-    +confirmOrder(orderId: String, paymentOption: String): void
-    +processSystemCardPayment(orderId: String, cardInfo: String): Payment
-    +markPayAtCounter(orderId: String): String
-    +completeCounterPayment(orderNumber: String, paymentMethod: String): Payment
-
-    +getOrderQueue(): List<Order>
-    +updateOrderStatus(orderId: String, status: String): void
-
-    +addNewMenuItem(name: String, price: double, category: String, description: String): MenuItem
-    +updateExistingMenuItem(itemId: String, price: double, description: String): void
-    +generateDailySalesSummary(date: Date): DailySalesSummary
-}
-
-class Order {
-    -id: String
-    -orderNumber: String
-    -items: List<OrderItem>
-    -status: String
-    -paymentStatus: String
-    -createdAt: Date
-    -totalAmount: double
-    +calculateTotal(): double
-}
-
-class OrderItem {
-    -menuItem: MenuItem
-    -quantity: int
-    -unitPrice: double
-    -customizations: String
-    +getItemTotal(): double
-}
-
-class MenuItem {
-    -id: String
-    -name: String
-    -price: double
-    -category: String
-    -description: String
-}
-
-class Payment {
-    -id: String
-    -orderId: String
-    -amount: double
-    -method: String
-    -status: String
-    -paidAt: Date
-}
-
-class DailySalesSummary {
-    -date: Date
-    -totalRevenue: double
-    -numberOfOrders: int
-    -topSellingItems: List<MenuItem>
-}
-
-class Database {
-    -connectionString: String
-    +saveOrder(order: Order): void
-    +getAllOrders(): List<Order>
-    +loadOrderByNumber(orderNumber: String): Order
-    +loadOrdersByStatus(status: String): List<Order>
-    +saveMenuItem(item: MenuItem): void
-    +loadAllMenuItems(): List<MenuItem>
-    +savePayment(payment: Payment): void
-    +loadPaymentsByDate(date: Date): List<Payment>
-}
-
-CustomerUI --> OrderSystem
-CashierUI --> OrderSystem
-KitchenUI --> OrderSystem
-ManagerUI --> OrderSystem
-OrderSystem --> Order
-OrderSystem --> MenuItem
-OrderSystem --> Payment
-OrderSystem --> DailySalesSummary
-OrderSystem --> Database
+CustomerUI --> CustomerAppController
+CashierUI  --> CashierAppController
+KitchenUI  --> KitchenAppController
+ManagerUI  --> ManagerAppController
+CustomerAppController --> OrderingService
+CustomerAppController --> PaymentService
+CustomerAppController --> MenuService
+CashierAppController  --> OrderingService
+CashierAppController  --> PaymentService
+KitchenAppController  --> KitchenService
+ManagerAppController  --> MenuService
+ManagerAppController  --> ReportService
 Order *-- "many" OrderItem
 OrderItem --> MenuItem
+OrderInterface --> Order
+MenuInterface  --> MenuItem
+PaymentInterface --> Payment
+class SqlOrder
+class SqlMenu
+class SqlPayment
+OrderInterface <|.. SqlOrder
+MenuInterface  <|.. SqlMenu
+PaymentInterface <|.. SqlPayment
+SqlOrder --> Database
+SqlMenu  --> Database
+SqlPayment --> Database
+OrderingService --> OrderInterface
+OrderingService --> MenuInterface
+PaymentService  --> OrderInterface
+PaymentService  --> PaymentInterface
+KitchenService  --> OrderInterface
+MenuService     --> MenuInterface
+ReportService --> OrderInterface
+ReportService --> PaymentInterface
 
 @enduml
