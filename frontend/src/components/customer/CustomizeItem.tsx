@@ -1,25 +1,35 @@
 import {useState} from "react";
 import {Minus,Plus} from "lucide-react"
-import * as Types from "../../types/index"
-
+import * as Types from "../../types/index";
+import { customerAppController } from "../../services/CustomerAppController";
 
 export default function CustomizeItem({item, orderId, goBack}:{item: Types.MenuItem, orderId:string, goBack:()=>void}) {
 
-    const [itemQuantity, setItemQuantity] = useState<number>(0);
+    const [itemQuantity, setItemQuantity] = useState<number>(1);
     const [itemCustomizations, setItemCustomizations] = useState<string>("");
+    const [isAdding, setIsAdding] = useState(false);
 
     const handleAddToOrder = async () => {
+        if (itemQuantity < 1) {
+            alert("Please select at least 1 item");
+            return;
+        }
+
+        setIsAdding(true);
         try {
-        const res = await new Promise<string>((resolve) => {
-            setTimeout(() => {
-            resolve("added order:" + itemQuantity + itemCustomizations + " to " + orderId);
-            }, 600);
-        });
-        alert(res);
-        goBack();
+            await customerAppController.addItemToOrder(
+                orderId,
+                item.id,
+                itemQuantity,
+                itemCustomizations
+            );
+            goBack();
         } catch (err) {
-        console.error("API Error:", err);
-        } 
+            console.error("API Error:", err);
+            alert("Failed to add item to order. Please try again.");
+        } finally {
+            setIsAdding(false);
+        }
     };
   
   
@@ -72,9 +82,10 @@ export default function CustomizeItem({item, orderId, goBack}:{item: Types.MenuI
 
           <button
             onClick={handleAddToOrder}
-            className="w-full bg-red-600 text-white py-6 rounded-xl text-2xl font-bold hover:bg-red-700 transition"
+            disabled={isAdding || itemQuantity < 1}
+            className="w-full bg-red-600 text-white py-6 rounded-xl text-2xl font-bold hover:bg-red-700 transition disabled:bg-gray-400 disabled:cursor-not-allowed"
           >
-            Add to Order - ${(itemQuantity*item.price).toFixed(2)}
+            {isAdding ? "Adding..." : `Add to Order - $${(itemQuantity*item.price).toFixed(2)}`}
           </button>
         </div>
       </div>

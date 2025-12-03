@@ -1,63 +1,74 @@
 import * as Types from "../../types/index";
 import { useEffect, useState } from "react";
 import { Plus, Minus, Trash2 } from "lucide-react";
+import { customerAppController } from "../../services/CustomerAppController";
 
-export default function ReviewOrder({ orderId, handleReset }: { orderId: string, handleReset:()=>void}) {
+export default function ReviewOrder({ 
+  orderId, 
+  handleReset,
+  handleProceedToPayment 
+}: { 
+  orderId: string, 
+  handleReset:()=>void,
+  handleProceedToPayment?: (order: Types.Order) => void
+}) {
   const [orderSummary, setOrderSummary] = useState<Types.Order | null>(null);
 
   const handleUpdateQuantity = async (itemId: string, quantity: number) => {
+    if (quantity < 1) {
+      // If quantity becomes 0, remove the item instead
+      handleRemoveItem(itemId);
+      return;
+    }
+
     try {
-      const res = await new Promise<string>((resolve) => {
-        setTimeout(() => {
-          resolve(
-            "order" +
-              orderId +
-              "updated item " +
-              itemId +
-              " updated quantity to" +
-              quantity
-          );
-        }, 600);
-      });
-      alert(res);
+      // Find the item to get its customizations
+      const currentItem = orderSummary?.items.find(item => item.menuItemId === itemId);
+      const customizations = currentItem?.customizations || currentItem?.specialInstructions || "";
+
+      await customerAppController.editItemInOrder(
+        orderId,
+        itemId,
+        quantity,
+        customizations
+      );
+      
+      // Reload order to get updated data
+      const updatedOrder = await customerAppController.reviewCurrentOrder(orderId);
+      setOrderSummary(updatedOrder);
     } catch (err) {
       console.error("API Error:", err);
+      alert("Failed to update quantity. Please try again.");
     }
   };
 
   const handleRemoveItem = async (itemId: string) => {
     try {
-      const res = await new Promise<string>((resolve) => {
-        setTimeout(() => {
-          resolve("order" + orderId + "removed item " + itemId);
-        }, 600);
-      });
-      alert(res);
+      await customerAppController.removeItemFromOrder(orderId, itemId);
+      
+      // Reload order to get updated data
+      const updatedOrder = await customerAppController.reviewCurrentOrder(orderId);
+      setOrderSummary(updatedOrder);
     } catch (err) {
       console.error("API Error:", err);
+      alert("Failed to remove item. Please try again.");
     }
   };
 
   useEffect(() => {
     async function loadOrder() {
-      const res = await new Promise<Types.Order>((resolve) => {
-        setTimeout(() => {
-          resolve({
-            id: "order1",
-            items: [],
-            total: 12,
-            status: Types.OrderStatus.PENDING,
-            createdAt: "11/23/2025",
-            customerName: "Robert",
-            customerEmail: "blahblah@blahblah.com",
-          });
-        }, 600);
-      });
-
-      setOrderSummary(res);
+      try {
+        const order = await customerAppController.reviewCurrentOrder(orderId);
+        setOrderSummary(order);
+      } catch (err) {
+        console.error("Error loading order:", err);
+        alert("Failed to load order. Please try again.");
+      }
     }
 
-    loadOrder();
+    if (orderId) {
+      loadOrder();
+    }
   }, [orderId]);
 
   if (orderSummary == null){
@@ -83,10 +94,19 @@ export default function ReviewOrder({ orderId, handleReset }: { orderId: string,
                   >
                     <div className="flex items-start gap-4">
                       <div className="flex-1">
-                        <h3 className="text-xl font-bold">{item.menuItemId}</h3>
-                        <p className="text-sm text-gray-600">
-                          {item.specialInstructions}
-                        </p>
+                        <h3 className="text-xl font-bold">
+                          {item.menuItem?.name || `Item ${item.menuItemId}`}
+                        </h3>
+                        {(item.customizations || item.specialInstructions) && (
+                          <p className="text-sm text-gray-600">
+                            {item.customizations || item.specialInstructions}
+                          </p>
+                        )}
+                        {item.unitPrice > 0 && (
+                          <p className="text-sm text-gray-500 mt-1">
+                            ${item.unitPrice.toFixed(2)} each
+                          </p>
+                        )}
                         <div className="flex items-center gap-4 mt-2">
                           <button
                             onClick={() =>
@@ -119,29 +139,33 @@ export default function ReviewOrder({ orderId, handleReset }: { orderId: string,
                           </button>
                         </div>
                       </div>
-                      {/* <div className="text-xl font-bold">
-                        ${item.price.toFixed(2)}
-                      </div> */}
+                      <div className="text-xl font-bold">
+                        ${(item.quantity * item.unitPrice).toFixed(2)}
+                      </div>
                     </div>
                   </div>
                 ))}
               </div>
 
-              {/* <div className="border-t pt-4 mt-4">
+              <div className="border-t pt-4 mt-4">
                 <div className="flex justify-between items-center text-3xl font-bold">
                   <span>Total:</span>
                   <span className="text-red-600">
-                    ${calculateTotal().toFixed(2)}
+                    ${orderSummary.total.toFixed(2)}
                   </span>
                 </div>
-              </div> */}
+              </div>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <button
                 onClick={() => {
-                    alert("User payment not yet implemented!");
-                    handleReset();
+                    if (handleProceedToPayment && orderSummary) {
+                      handleProceedToPayment(orderSummary);
+                    } else {
+                      alert("User payment not yet implemented!");
+                      handleReset();
+                    }
                 }}
                 className="bg-red-600 text-white py-4 rounded-xl text-xl font-bold hover:bg-red-700 transition"
               >

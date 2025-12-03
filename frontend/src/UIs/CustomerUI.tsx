@@ -1,29 +1,44 @@
 import { useState } from "react";
 import { ArrowLeft, ShoppingCart } from "lucide-react";
-import WelcomeCustomer from "../components/order/WelcomeScreen";
-import BrowseMenu from "../components/menu/BrowseMenu";
-import CustomizeItem from "../components/menu/CustomizeItem";
-import ReviewOrder from "../components/order/ReviewOrder";
+import WelcomeCustomer from "../components/customer/WelcomeScreen";
+import BrowseMenu from "../components/customer/BrowseMenu";
+import CustomizeItem from "../components/customer/CustomizeItem";
+import ReviewOrder from "../components/customer/ReviewOrder";
+import OrderPayment from "../components/customer/OrderPayment";
 import * as Types from "../types/index"
 
 export default function CustomerUI() {
   const [orderId, setOrderId] = useState<string | null>(null);
   const [item, setItem] = useState<Types.MenuItem | null>(null);
   const [viewingOrder, setViewingOrder] = useState<boolean>(false);
+  const [isPayment, setIsPayment] = useState<boolean>(false);
+  const [currentOrder, setCurrentOrder] = useState<Types.Order | null>(null);
 
 
   function handleReset(){
     setOrderId(null);
     setItem(null);
     setViewingOrder(false);
+    setIsPayment(false);
+    setCurrentOrder(null);
+  }
 
+  function handleProceedToPayment(order: Types.Order) {
+    setCurrentOrder(order);
+    setIsPayment(true);
+    setViewingOrder(false);
   }
 
   function handleGoBack() {
+    if (isPayment) {
+      setIsPayment(false);
+      setViewingOrder(true);
+      return;
+    }
 
     if (viewingOrder){
-        setViewingOrder(false);
-        return;
+      setViewingOrder(false);
+      return;
     }
 
     if (item) {
@@ -38,13 +53,16 @@ export default function CustomerUI() {
   }
 
   function OrderScreen() {
-
     if (orderId === null) {
       return <WelcomeCustomer startOrder={(orderId) => setOrderId(orderId)} />;
     }
 
+    if (isPayment && currentOrder) {
+      return <OrderPayment order={currentOrder} handleReset={handleReset} goBack={handleGoBack} />;
+    }
+
     if (viewingOrder){
-        return (<ReviewOrder orderId={orderId} handleReset={handleReset} />);
+        return (<ReviewOrder orderId={orderId} handleReset={handleReset} handleProceedToPayment={handleProceedToPayment} />);
     }
 
     if (item == null) {
@@ -52,11 +70,10 @@ export default function CustomerUI() {
     }
 
     return <CustomizeItem item={item} orderId={orderId} goBack={handleGoBack}/>
-
   }
 
   function ViewOrderButton() {
-    if (orderId) {
+    if (orderId && !isPayment) {
       return (
         <div className="min-h-screen bg-gray-100">
           <div className="bg-red-600 text-white p-6 shadow-lg">
@@ -79,6 +96,10 @@ export default function CustomerUI() {
   }
 
   function GoBackButton() {
+    if (orderId === null) {
+      return null;
+    }
+    
     return (
       <div className="bg-red-600 text-white p-6 shadow-lg">
         <div className="flex items-center gap-4 max-w-6xl mx-auto">

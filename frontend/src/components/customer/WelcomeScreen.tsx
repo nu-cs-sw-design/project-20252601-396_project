@@ -1,3 +1,6 @@
+import { customerAppController } from "../../services/CustomerAppController";
+import * as Types from "../../types/index";
+
 export default function WelcomeCustomer({
   startOrder,
 }: {
@@ -6,14 +9,11 @@ export default function WelcomeCustomer({
 
   const handleStartOrder = async () => {
     try {
-      const res = await new Promise<string>((resolve) => {
-        setTimeout(() => {
-          resolve("order1");
-        }, 600);
-      });
-      startOrder(res);
+      const order = await customerAppController.startOrder();
+      startOrder(order.id);
     } catch (err) {
       console.error("API Error:", err);
+      alert("Failed to create order. Please try again.");
     } 
   };
 
