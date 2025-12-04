@@ -140,7 +140,7 @@ export default function OrderList({ onOrderSelect }: OrderListProps) {
                   <div className="flex items-center gap-2">
                     <DollarSign size={20} className="text-red-600" />
                     <span className="text-2xl font-bold text-red-600">
-                      ${order.total.toFixed(2)}
+                      ${order.totalAmount.toFixed(2)}
                     </span>
                   </div>
                   <span className="text-sm text-gray-500">Click to view</span>

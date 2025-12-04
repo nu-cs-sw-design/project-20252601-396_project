@@ -93,26 +93,6 @@ export default function OrderDetails({ order, onBack, onProceedToPayment }: Orde
           </div>
         </div>
 
-        {/* Customer Info */}
-        {(orderDetails.customerName || orderDetails.customerEmail) && (
-          <div className="bg-white rounded-2xl shadow-xl p-6 mb-6">
-            <div className="flex items-center gap-2 mb-4">
-              <User size={20} className="text-gray-600" />
-              <h2 className="text-xl font-bold text-gray-800">Customer Information</h2>
-            </div>
-            {orderDetails.customerName && (
-              <p className="text-gray-700 mb-1">
-                <span className="font-semibold">Name:</span> {orderDetails.customerName}
-              </p>
-            )}
-            {orderDetails.customerEmail && (
-              <p className="text-gray-700">
-                <span className="font-semibold">Email:</span> {orderDetails.customerEmail}
-              </p>
-            )}
-          </div>
-        )}
-
         {/* Order Items */}
         <div className="bg-white rounded-2xl shadow-xl p-6 mb-6">
           <h2 className="text-xl font-bold text-gray-800 mb-4">Order Items</h2>
@@ -127,16 +107,16 @@ export default function OrderDetails({ order, onBack, onProceedToPayment }: Orde
                   <div className="flex justify-between items-start">
                     <div className="flex-1">
                       <h3 className="text-lg font-bold text-gray-800">
-                        {item.menuItem?.name || `Item ${item.menuItemId}`}
+                        {item.menuItem?.name}
                       </h3>
                       {item.menuItem?.description && (
                         <p className="text-sm text-gray-600 mt-1">
                           {item.menuItem.description}
                         </p>
                       )}
-                      {(item.customizations || item.specialInstructions) && (
+                      {(item.customizations) && (
                         <p className="text-sm text-gray-500 mt-2 italic">
-                          Special: {item.customizations || item.specialInstructions}
+                          Special: {item.customizations}
                         </p>
                       )}
                       <div className="flex items-center gap-4 mt-2">
@@ -168,7 +148,7 @@ export default function OrderDetails({ order, onBack, onProceedToPayment }: Orde
               <span className="text-2xl font-bold text-gray-800">Total Amount</span>
             </div>
             <span className="text-3xl font-bold text-red-600">
-              ${orderDetails.total.toFixed(2)}
+              ${orderDetails.totalAmount.toFixed(2)}
             </span>
           </div>
         </div>

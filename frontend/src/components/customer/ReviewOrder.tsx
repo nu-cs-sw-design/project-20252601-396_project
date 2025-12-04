@@ -23,8 +23,8 @@ export default function ReviewOrder({
 
     try {
       // Find the item to get its customizations
-      const currentItem = orderSummary?.items.find(item => item.menuItemId === itemId);
-      const customizations = currentItem?.customizations || currentItem?.specialInstructions || "";
+      const currentItem = orderSummary?.items.find(item => item.menuItem.id === itemId);
+      const customizations = currentItem?.customizations || "";
 
       await customerAppController.editItemInOrder(
         orderId,
@@ -89,17 +89,17 @@ export default function ReviewOrder({
               <div className="space-y-4">
                 {orderSummary.items.map((item) => (
                   <div
-                    key={item.menuItemId}
+                    key={item.menuItem.id}
                     className="border-b pb-4 last:border-b-0"
                   >
                     <div className="flex items-start gap-4">
                       <div className="flex-1">
                         <h3 className="text-xl font-bold">
-                          {item.menuItem?.name || `Item ${item.menuItemId}`}
+                          {item.menuItem?.name || `Item ${item.menuItem.id}`}
                         </h3>
-                        {(item.customizations || item.specialInstructions) && (
+                        {(item.customizations) && (
                           <p className="text-sm text-gray-600">
-                            {item.customizations || item.specialInstructions}
+                            {item.customizations}
                           </p>
                         )}
                         {item.unitPrice > 0 && (
@@ -111,7 +111,7 @@ export default function ReviewOrder({
                           <button
                             onClick={() =>
                               handleUpdateQuantity(
-                                item.menuItemId,
+                                item.menuItem.id,
                                 item.quantity - 1
                               )
                             }
@@ -123,7 +123,7 @@ export default function ReviewOrder({
                           <button
                             onClick={() =>
                               handleUpdateQuantity(
-                                item.menuItemId,
+                                item.menuItem.id,
                                 item.quantity + 1
                               )
                             }
@@ -132,7 +132,7 @@ export default function ReviewOrder({
                             <Plus size={16} />
                           </button>
                           <button
-                            onClick={() => handleRemoveItem(item.menuItemId)}
+                            onClick={() => handleRemoveItem(item.menuItem.id)}
                             className="ml-auto text-red-600 hover:bg-red-50 p-2 rounded"
                           >
                             <Trash2 size={20} />
@@ -151,7 +151,7 @@ export default function ReviewOrder({
                 <div className="flex justify-between items-center text-3xl font-bold">
                   <span>Total:</span>
                   <span className="text-red-600">
-                    ${orderSummary.total.toFixed(2)}
+                    ${orderSummary.totalAmount.toFixed(2)}
                   </span>
                 </div>
               </div>

@@ -210,10 +210,10 @@ export default function OrderQueue({ onOrderSelect }: OrderQueueProps) {
                     {order.items.map((item, index) => (
                       <div key={index} className="text-sm text-gray-600">
                         <span className="font-semibold">{item.quantity}x</span>{" "}
-                        {item.menuItem?.name || `Item ${item.menuItemId}`}
-                        {(item.customizations || item.specialInstructions) && (
+                        {item.menuItem?.name || `Item ${item.menuItem.id}`}
+                        {(item.customizations) && (
                           <span className="text-gray-500 italic">
-                            {" "}({item.customizations || item.specialInstructions})
+                            {" "}({item.customizations})
                           </span>
                         )}
                       </div>

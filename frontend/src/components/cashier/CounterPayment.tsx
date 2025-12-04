@@ -80,7 +80,7 @@ export default function CounterPayment({ order, onBack, onPaymentComplete }: Cou
               </div>
               <div className="text-right">
                 <p className="text-sm text-gray-500">Total Amount</p>
-                <p className="text-3xl font-bold text-red-600">${order.total.toFixed(2)}</p>
+                <p className="text-3xl font-bold text-red-600">${order.totalAmount.toFixed(2)}</p>
               </div>
             </div>
           </div>
@@ -137,7 +137,7 @@ export default function CounterPayment({ order, onBack, onPaymentComplete }: Cou
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-600">Amount:</span>
-                <span className="font-semibold">${order.total.toFixed(2)}</span>
+                <span className="font-semibold">${order.totalAmount.toFixed(2)}</span>
               </div>
             </div>
           </div>

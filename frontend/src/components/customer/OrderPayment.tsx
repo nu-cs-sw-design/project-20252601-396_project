@@ -81,7 +81,7 @@ export default function OrderPayment({
               </div>
               <div className="flex justify-between text-2xl font-bold pt-2 border-t">
                 <span>Total:</span>
-                <span className="text-red-600">${order.total.toFixed(2)}</span>
+                <span className="text-red-600">${order.totalAmount.toFixed(2)}</span>
               </div>
             </div>
           </div>
