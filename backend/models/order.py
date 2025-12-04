@@ -5,21 +5,16 @@ from database import db
 from sqlalchemy import Column, Integer, String, Float, DateTime, Enum
 from datetime import datetime
 import enum
+from models.payment import PaymentStatus
 
 class OrderStatus(enum.Enum):
     """Order status enumeration"""
-    PENDING = "pending",
+    PENDING = "pending"
     CONFIRMED = 'confirmed'
     PREPARING = 'preparing'
     READY = 'ready'
     COMPLETED = 'completed'
     CANCELLED = 'cancelled'
-
-class PaymentStatus(enum.Enum):
-    """Payment status enumeration"""
-    PENDING = 'pending'
-    COMPLETED = 'completed'
-    FAILED = 'failed'
 
 class Order(db.Model):
     """Order model representing customer orders"""
@@ -29,32 +24,23 @@ class Order(db.Model):
     order_number = Column(String(20), unique=True, nullable=False, index=True)
     status = Column(db.Enum(OrderStatus), default=OrderStatus.PENDING, nullable=False)
     payment_status = Column(db.Enum(PaymentStatus), default=PaymentStatus.PENDING, nullable=False)
-    subtotal = Column(Float, nullable=False, default=0.0)
-    tax = Column(Float, nullable=False, default=0.0)
     total = Column(Float, nullable=False, default=0.0)
-    payment_method = Column(String(50))  # 'card_at_system', 'cash_at_counter', 'card_at_counter'
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
     # Relationships
     order_items = db.relationship('OrderItem', backref='order', lazy=True, cascade='all, delete-orphan')
     payments = db.relationship('Payment', backref='order', lazy=True, cascade='all, delete-orphan')
     
     def to_dict(self):
-        """Convert model to dictionary"""
+        """Convert model to dictionary matching frontend types"""
         return {
-            'id': self.id,
-            'order_number': self.order_number,
+            'id': str(self.id),
+            'orderNumber': self.order_number,
+            'items': [item.to_dict() for item in self.order_items],
             'status': self.status.value if self.status else None,
-            'payment_status': self.payment_status.value if self.payment_status else None,
-            'subtotal': self.subtotal,
-            'tax': self.tax,
-            'total': self.total,
-            'payment_method': self.payment_method,
-            'created_at': self.created_at.isoformat() if self.created_at else None,
-            'updated_at': self.updated_at.isoformat() if self.updated_at else None,
-            'order_items': [item.to_dict() for item in self.order_items],
-            'payments': [payment.to_dict() for payment in self.payments]
+            'paymentStatus': self.payment_status.value if self.payment_status else None,
+            'createdAt': self.created_at.isoformat() if self.created_at else None,
+            'totalAmount': self.total
         }
     
     def __repr__(self):

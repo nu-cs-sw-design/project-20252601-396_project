@@ -13,24 +13,17 @@ class MenuItem(db.Model):
     name = Column(String(100), nullable=False)
     description = Column(Text)
     price = Column(Float, nullable=False)
-    category = Column(String(50), nullable=False)  # e.g., 'Burgers', 'Sides', 'Drinks'
-    image_url = Column(String(255))
-    customization_options = Column(JSON)  # Store available customization options
-    is_available = Column(Boolean, default=True, nullable=False)
+    category = Column(String(50), nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
     def to_dict(self):
-        """Convert model to dictionary"""
+        """Convert model to dictionary matching frontend types"""
         return {
-            'id': self.id,
+            'id': str(self.id),
             'name': self.name,
-            'description': self.description,
             'price': self.price,
             'category': self.category,
-            'image_url': self.image_url,
-            'customization_options': self.customization_options or {},
-            'is_available': self.is_available
+            'description': self.description or ''
         }
     
     def __repr__(self):
