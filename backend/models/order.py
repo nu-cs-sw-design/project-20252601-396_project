@@ -8,19 +8,18 @@ import enum
 
 class OrderStatus(enum.Enum):
     """Order status enumeration"""
-    PENDING = "Pending"
-    IN_PREPARATION = "In Preparation"
-    READY = "Ready"
-    COMPLETED = "Completed"
-    CANCELLED = "Cancelled"
+    PENDING = "pending",
+    CONFIRMED = 'confirmed'
+    PREPARING = 'preparing'
+    READY = 'ready'
+    COMPLETED = 'completed'
+    CANCELLED = 'cancelled'
 
 class PaymentStatus(enum.Enum):
     """Payment status enumeration"""
-    PENDING = "Pending"
-    PENDING_COUNTER = "Pending Payment at Counter"
-    PAID = "Paid"
-    FAILED = "Failed"
-    REFUNDED = "Refunded"
+    PENDING = 'pending'
+    COMPLETED = 'completed'
+    FAILED = 'failed'
 
 class Order(db.Model):
     """Order model representing customer orders"""

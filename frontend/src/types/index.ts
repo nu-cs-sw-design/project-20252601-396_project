@@ -13,28 +13,24 @@ export interface MenuItem {
 
 // Order Types
 export interface OrderItem {
-  menuItemId: string;
-  menuItem?: MenuItem;
+  menuItem: MenuItem;
   quantity: number;
   unitPrice: number;
   customizations?: string;
-  specialInstructions?: string;
 }
 
 export interface Order {
   id: string;
   orderNumber: string;
   items: OrderItem[];
-  total: number;
   status: OrderStatus;
   paymentStatus: PaymentStatus | string;
   createdAt: string;
-  customerName?: string;
-  customerEmail?: string;
+  totalAmount: number;
 }
 
 export enum OrderStatus {
-  PENDING = 'pending',
+  PENDING = "pending",
   CONFIRMED = 'confirmed',
   PREPARING = 'preparing',
   READY = 'ready',
