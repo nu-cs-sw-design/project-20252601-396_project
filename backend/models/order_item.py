@@ -13,16 +13,14 @@ class OrderItem(db.Model):
     order_id = Column(Integer, ForeignKey('orders.id'), nullable=False)
     menu_item_id = Column(Integer, ForeignKey('menu_items.id'), nullable=False)
     quantity = Column(Integer, nullable=False, default=1)
-    unit_price = Column(Float, nullable=False)  # Price at time of order
-    customizations = Column(JSON)  # Store selected customization options
-    item_total = Column(Float, nullable=False)  # quantity * unit_price
-    created_at = Column(DateTime, default=datetime.utcnow)
+    unit_price = Column(Float, nullable=False)
+    customizations = Column(JSON)
     
     # Relationship - use joined loading to avoid detached instance errors
     menu_item = db.relationship('MenuItem', backref='order_items', lazy='joined')
     
     def to_dict(self):
-        """Convert model to dictionary"""
+        """Convert model to dictionary matching frontend types"""
         # Handle detached instance by checking if menu_item is accessible
         menu_item_dict = None
         try:
@@ -32,15 +30,20 @@ class OrderItem(db.Model):
             # If menu_item is detached, just use menu_item_id
             pass
         
+        # Convert customizations from JSON to string if it's a dict/list
+        customizations_str = None
+        if self.customizations:
+            if isinstance(self.customizations, dict) or isinstance(self.customizations, list):
+                import json
+                customizations_str = json.dumps(self.customizations)
+            else:
+                customizations_str = str(self.customizations)
+        
         return {
-            'id': self.id,
-            'order_id': self.order_id,
-            'menu_item_id': self.menu_item_id,
-            'menu_item': menu_item_dict,
+            'menuItem': menu_item_dict,
             'quantity': self.quantity,
-            'unit_price': self.unit_price,
-            'customizations': self.customizations or {},
-            'item_total': self.item_total
+            'unitPrice': self.unit_price,
+            'customizations': customizations_str
         }
     
     def __repr__(self):
