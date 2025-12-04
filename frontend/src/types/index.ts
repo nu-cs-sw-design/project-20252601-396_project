@@ -20,11 +20,9 @@ export interface OrderItem {
 }
 
 export interface Order {
-  id: string;
-  orderNumber: string;
+  id: number;
   items: OrderItem[];
   status: OrderStatus;
-  paymentStatus: PaymentStatus | string;
   createdAt: string;
   totalAmount: number;
 }
@@ -32,6 +30,7 @@ export interface Order {
 export enum OrderStatus {
   PENDING = "pending",
   CONFIRMED = 'confirmed',
+  PAID = 'paid',
   PREPARING = 'preparing',
   READY = 'ready',
   COMPLETED = 'completed',
@@ -44,14 +43,7 @@ export interface Payment {
   orderId: string;
   amount: number;
   method: string;
-  status: PaymentStatus;
   paidAt: string;
-}
-
-export enum PaymentStatus {
-  PENDING = 'pending',
-  COMPLETED = 'completed',
-  FAILED = 'failed'
 }
 
 // Daily Sales Summary Types

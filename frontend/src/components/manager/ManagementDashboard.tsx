@@ -16,8 +16,7 @@ export default function ManagementDashboard({
   const [stats, setStats] = useState({
     todayRevenue: 0,
     todayOrders: 0,
-    totalMenuItems: 0,
-    pendingOrders: 0,
+    topSellingItems: [] as Types.MenuItem[]
   });
 
   useEffect(() => {
@@ -28,11 +27,11 @@ export default function ManagementDashboard({
 
   const loadStats = async () => {
     try {
-      // Get menu items count
-      const menuItems = await managerAppController.listMenuItems();
+      // // Get menu items count
+      // const menuItems = await managerAppController.listMenuItems();
       
-      // Get order queue (pending orders)
-      const orderQueue = await kitchenAppController.getOrderQueue();
+      // // Get order queue (pending orders)
+      // const orderQueue = await kitchenAppController.getOrderQueue();
       
       // Get today's sales summary
       const today = new Date();
@@ -41,8 +40,7 @@ export default function ManagementDashboard({
       setStats({
         todayRevenue: todaySummary.totalRevenue,
         todayOrders: todaySummary.numberOfOrders,
-        totalMenuItems: menuItems.length,
-        pendingOrders: orderQueue.length,
+        topSellingItems: todaySummary.topSellingItems
       });
     } catch (error) {
       console.error("Error loading stats:", error);
@@ -50,8 +48,7 @@ export default function ManagementDashboard({
       setStats({
         todayRevenue: 0,
         todayOrders: 0,
-        totalMenuItems: 0,
-        pendingOrders: 0,
+        topSellingItems: [],
       });
     }
   };
@@ -85,25 +82,35 @@ export default function ManagementDashboard({
             </div>
           </div>
 
-          <div className="bg-white rounded-xl shadow-lg p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-gray-600 text-sm mb-1">Menu Items</p>
-                <p className="text-3xl font-bold text-gray-800">{stats.totalMenuItems}</p>
+          <div> 
+            <div className="bg-white rounded-xl shadow-lg p-6 h-full">
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <p className="text-gray-600 text-sm mb-1">Top Selling Items</p>
+                </div>
+                <TrendingUp size={40} className="text-purple-600" />
               </div>
-              <TrendingUp size={40} className="text-purple-600" />
+              {/* display the items in 1 2 3 4 5*/}
+              <div className="flex flex-wrap gap-4">
+                {stats.topSellingItems.length === 0 ? (
+                  <p className="text-gray-500">No data available</p>
+                ) : (
+                  stats.topSellingItems.map((item, index) => (
+                    <div
+                      key={item.id}
+                      className="bg-gray-100 rounded-lg p-3 flex-1 min-w-[120px] max-w-[150px]"
+                    >
+                      <p className="text-gray-800 font-medium"> {index + 1}. {item.name}</p>
+                    </div>
+                  ))
+                )}
+              </div>
             </div>
           </div>
 
-          <div className="bg-white rounded-xl shadow-lg p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-gray-600 text-sm mb-1">Pending Orders</p>
-                <p className="text-3xl font-bold text-gray-800">{stats.pendingOrders}</p>
-              </div>
-              <Calendar size={40} className="text-orange-600" />
-            </div>
-          </div>
+
+
+  
         </div>
 
         {/* Quick Actions */}

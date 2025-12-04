@@ -8,7 +8,7 @@ import OrderPayment from "../components/customer/OrderPayment";
 import * as Types from "../types/index"
 
 export default function CustomerUI() {
-  const [orderId, setOrderId] = useState<string | null>(null);
+  const [orderId, setOrderId] = useState<number | null>(null);
   const [item, setItem] = useState<Types.MenuItem | null>(null);
   const [viewingOrder, setViewingOrder] = useState<boolean>(false);
   const [isPayment, setIsPayment] = useState<boolean>(false);

@@ -4,7 +4,7 @@ import * as Types from "../../types/index";
 export default function WelcomeCustomer({
   startOrder,
 }: {
-  startOrder: (orderId:string)=> void;
+  startOrder: (orderId:number)=> void;
 }) {
 
   const handleStartOrder = async () => {

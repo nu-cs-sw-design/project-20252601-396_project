@@ -48,6 +48,7 @@ export default function MenuManagement({ onBack }: MenuManagementProps) {
     });
     setEditingItem(item);
     setShowAddForm(true);
+    window.scrollTo({ top: 0, behavior: "smooth" })
   };
 
   const handleDeleteItem = async (itemId: string) => {
@@ -56,7 +57,7 @@ export default function MenuManagement({ onBack }: MenuManagementProps) {
         // Note: Delete endpoint not in design.puml, but we can add it
         // For now, we'll need to implement this in the backend
         // await managerAppController.deleteMenuItem(itemId);
-        alert("Delete functionality will be available when backend is implemented");
+        alert("Delete functionality isn't currently implemented for this version.");
         // loadMenuItems();
       } catch (error) {
         console.error("Error deleting menu item:", error);
@@ -95,6 +96,7 @@ export default function MenuManagement({ onBack }: MenuManagementProps) {
       setEditingItem(null);
       setFormData({ name: "", price: "", category: "", description: "" });
       loadMenuItems();
+
     } catch (error) {
       console.error("Error saving menu item:", error);
       alert("Failed to save menu item. Please try again.");

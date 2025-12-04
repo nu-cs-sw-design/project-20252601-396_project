@@ -2,7 +2,7 @@
 Order Service - Business logic for order operations
 """
 from database import db
-from models.order import Order, OrderStatus, PaymentStatus
+from models.order import Order, OrderStatus
 from models.order_item import OrderItem
 from models.menu_item import MenuItem
 from services.menu_service import MenuService
@@ -13,50 +13,29 @@ import string
 
 class OrderService:
     """Service for order-related operations"""
-    
-    TAX_RATE = 0.08  # 8% tax rate
-    
-    @staticmethod
-    def generate_order_number() -> str:
-        """Generate a unique order number"""
-        # Format: ORD-XXXXXX (6 random alphanumeric characters)
-        while True:
-            random_part = ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))
-            order_number = f"ORD-{random_part}"
-            
-            # Check if order number already exists
-            existing = Order.query.filter_by(order_number=order_number).first()
-            if not existing:
-                return order_number
-    
+    TAX_RATE = 0.08
     @staticmethod
     def create_order() -> Order:
         """Create a new empty order"""
         order = Order(
-            order_number=OrderService.generate_order_number(),
             status=OrderStatus.PENDING,
-            payment_status=PaymentStatus.PENDING,
-            subtotal=0.0,
-            tax=0.0,
-            total=0.0
+            total=0.0,
         )
         db.session.add(order)
         db.session.commit()
         return order
     
     @staticmethod
-    def get_order_by_id(order_id: int) -> Optional[Order]:
+    def get_order_by_id(order_id: int):
         """Get an order by ID"""
-        return Order.query.get(order_id)
-    
-    @staticmethod
-    def get_order_by_number(order_number: str) -> Optional[Order]:
-        """Get an order by order number"""
-        return Order.query.filter_by(order_number=order_number).first()
+        order = Order.query.get(order_id)
+        if not order:
+            raise ValueError(f"Order with id {order_id} not found.")
+        return order
     
     @staticmethod
     def add_item_to_order(order_id: int, menu_item_id: int, quantity: int, 
-                         customizations: Dict = None) -> OrderItem:
+                         customizations: string = None)-> Order:
         """
         Add an item to an order
         
@@ -73,26 +52,14 @@ class OrderService:
         if not order:
             raise ValueError(f"Order {order_id} not found")
         
-        menu_item = MenuService.get_menu_item_by_id(menu_item_id)
-        if not menu_item:
-            raise ValueError(f"Menu item {menu_item_id} not found")
-        
-        # Calculate price with customizations
-        unit_price = MenuService.calculate_customized_price(
-            menu_item.price,
-            customizations or {}
-        )
-        
-        item_total = unit_price * quantity
-        
+        menu_item = MenuService.getItemDetails(menu_item_id)
         # Create order item
         order_item = OrderItem(
             order_id=order_id,
             menu_item_id=menu_item_id,
             quantity=quantity,
-            unit_price=unit_price,
-            customizations=customizations or {},
-            item_total=item_total
+            unit_price=menu_item.price,
+            customizations=customizations
         )
         
         db.session.add(order_item)
@@ -101,10 +68,10 @@ class OrderService:
         OrderService._update_order_totals(order_id)
         
         db.session.commit()
-        return order_item
+        return order
     
     @staticmethod
-    def update_order_item_quantity(order_item_id: int, quantity: int) -> OrderItem:
+    def edit_item_on_order(orderID: int, menu_item_id:int, quantity: int, customizations: string):
         """
         Update the quantity of an order item
         
@@ -115,98 +82,79 @@ class OrderService:
         Returns:
             Updated OrderItem
         """
-        order_item = OrderItem.query.get(order_item_id)
+        order = OrderService.get_order_by_id(orderID)
+        
+        if not order:
+            raise ValueError(f"Order of id {orderID} not found")
+        order_item = None
+        for item in order.order_items:
+            if item.menu_item.id == menu_item_id:
+                order_item = item
         if not order_item:
-            raise ValueError(f"Order item {order_item_id} not found")
+            raise ValueError(f"Order item {menu_item_id} not found on order {orderID}")
         
         if quantity <= 0:
-            # Remove item if quantity is 0 or less
-            order_id = order_item.order_id
             db.session.delete(order_item)
             db.session.commit()
-            OrderService._update_order_totals(order_id)
-            return None
+            OrderService._update_order_totals(orderID)
+            return order
         
         order_item.quantity = quantity
-        order_item.item_total = order_item.unit_price * quantity
-        
+        order_item.customizations = customizations     
         db.session.commit()
-        
-        # Update order totals
         OrderService._update_order_totals(order_item.order_id)
-        
-        return order_item
+        return order
     
     @staticmethod
-    def remove_item_from_order(order_item_id: int) -> None:
+    def remove_item_from_order(orderID: int, menu_item_id: int) -> None:
         """Remove an item from an order"""
-        order_item = OrderItem.query.get(order_item_id)
+        order = OrderService.get_order_by_id(orderID)
+        if not order:
+            raise ValueError(f"Order of id {orderID} not found")
+        order_item = None
+        for item in order.order_items:
+            if item.menu_item.id == menu_item_id:
+                order_item = item
         if not order_item:
-            raise ValueError(f"Order item {order_item_id} not found")
+            raise ValueError(f"Order item {menu_item_id} not found on order {orderID}")
         
-        order_id = order_item.order_id
         db.session.delete(order_item)
         db.session.commit()
         
         # Update order totals
-        OrderService._update_order_totals(order_id)
-    
-    @staticmethod
-    def get_order_items(order_id: int) -> List[OrderItem]:
-        """Get all items in an order"""
-        return OrderItem.query.filter_by(order_id=order_id).all()
+        OrderService._update_order_totals(orderID)
+        return order
     
     @staticmethod
     def _update_order_totals(order_id: int) -> None:
         """Recalculate and update order subtotal, tax, and total"""
         order = OrderService.get_order_by_id(order_id)
         if not order:
-            return
+            raise ValueError(f"Order with id {order_id} not found.")
         
         # Calculate subtotal from all order items
-        order_items = OrderService.get_order_items(order_id)
-        subtotal = sum(item.item_total for item in order_items)
-        
-        # Calculate tax
-        tax = round(subtotal * OrderService.TAX_RATE, 2)
-        
-        # Calculate total
-        total = round(subtotal + tax, 2)
-        
+        order_items = order.order_items
         # Update order
-        order.subtotal = subtotal
-        order.tax = tax
-        order.total = total
-        order.updated_at = datetime.utcnow()
-        
+        subtotal = sum(item.unit_price * item.quantity for item in order_items)
+        order.total = round(subtotal * (1+OrderService.TAX_RATE), 2)
         db.session.commit()
-    
+
     @staticmethod
-    def finalize_order_for_payment(order_id: int, payment_method: str) -> Order:
-        """
-        Finalize order and prepare for payment
-        
-        Args:
-            order_id: ID of the order
-            payment_method: Payment method selected
-            
-        Returns:
-            Updated Order
-        """
+    def reviewOrder(order_id: int) -> Order:
+        """Get order details including all items"""
         order = OrderService.get_order_by_id(order_id)
         if not order:
-            raise ValueError(f"Order {order_id} not found")
-        
-        if not order.order_items:
-            raise ValueError("Cannot finalize order with no items")
-        
-        order.payment_method = payment_method
-        
-        if payment_method == 'card_at_system':
-            order.payment_status = PaymentStatus.PENDING
-        elif payment_method in ['cash_at_counter', 'card_at_counter']:
-            order.payment_status = PaymentStatus.PENDING_COUNTER
-        
+            raise ValueError(f"Order with id {order_id} not found.")
+        return order
+    
+    @staticmethod
+    def confirmOrder(order_id:int):
+        order = OrderService.get_order_by_id(order_id)
+        order.status = OrderStatus.CONFIRMED
         db.session.commit()
         return order
-
+    
+    @staticmethod
+    def get_counter_confirmed_orders() -> list[Order]:
+        """Get all orders that are unpaid (CONFIRMED)"""
+        return Order.query.filter(Order.status.in_([OrderStatus.CONFIRMED])).all()

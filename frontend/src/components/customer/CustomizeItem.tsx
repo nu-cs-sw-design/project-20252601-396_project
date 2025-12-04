@@ -3,7 +3,7 @@ import {Minus,Plus} from "lucide-react"
 import * as Types from "../../types/index";
 import { customerAppController } from "../../services/CustomerAppController";
 
-export default function CustomizeItem({item, orderId, goBack}:{item: Types.MenuItem, orderId:string, goBack:()=>void}) {
+export default function CustomizeItem({item, orderId, goBack}:{item: Types.MenuItem, orderId:number, goBack:()=>void}) {
 
     const [itemQuantity, setItemQuantity] = useState<number>(1);
     const [itemCustomizations, setItemCustomizations] = useState<string>("");

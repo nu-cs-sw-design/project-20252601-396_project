@@ -7,55 +7,64 @@ from typing import List, Optional, Dict
 
 class MenuService:
     """Service for menu-related operations"""
-    
+
     @staticmethod
-    def get_all_categories() -> List[str]:
+    def getMenuCategories() -> List[str]:
         """Get all unique menu categories"""
         categories = db.session.query(MenuItem.category).distinct().all()
-        return [cat[0] for cat in categories if cat[0]]
+        return [c[0] for c in categories if c[0]]
     
     @staticmethod
-    def get_menu_items_by_category(category: str) -> List[MenuItem]:
+    def getMenuItemsByCategory(category: str) -> List[MenuItem]:
         """Get all menu items in a specific category"""
         return MenuItem.query.filter_by(
             category=category,
-            is_available=True
         ).all()
     
     @staticmethod
-    def get_menu_item_by_id(item_id: int) -> Optional[MenuItem]:
+    def getAllMenuItems() -> List[MenuItem]:
+        """Get all menu items"""
+        return MenuItem.query.all()
+    
+    @staticmethod
+    def getItemDetails(item_id: int) -> MenuItem:
         """Get a menu item by ID"""
-        return MenuItem.query.get(item_id)
+        item = MenuItem.query.get(item_id)
+        if not item:
+            raise ValueError(f"Menu item with id {item_id} not found.")
+        return item
     
     @staticmethod
-    def get_all_menu_items() -> List[MenuItem]:
-        """Get all available menu items"""
-        return MenuItem.query.filter_by(is_available=True).all()
+    def addNewMenuItem(name: str, price: float, category: str, description: str) -> MenuItem:
+        """Add a new menu item"""
+        item = MenuItem(
+            name=name.strip(),
+            price=price,
+            category=category.strip(),
+            description=description.strip() if description else "",
+        )
+
+        db.session.add(item)
+        db.session.commit()
+
+        return item
+
     
     @staticmethod
-    def calculate_customized_price(base_price: float, customizations: Dict) -> float:
-        """
-        Calculate the price of an item with customizations
-        
-        Args:
-            base_price: Base price of the menu item
-            customizations: Dictionary of customization options and values
-            
-        Returns:
-            Final price after customizations
-        """
-        # Stub implementation - can be expanded based on customization rules
-        price = base_price
-        
-        # Example: Add price for size upgrades
-        if customizations.get('size') == 'large':
-            price += 1.0
-        elif customizations.get('size') == 'medium':
-            price += 0.5
-        
-        # Example: Add price for extra toppings
-        if customizations.get('extra_toppings'):
-            price += len(customizations.get('extra_toppings', [])) * 0.5
-        
-        return round(price, 2)
+    def updateExistingMenuItem(item_id: int, price: float, category: str, description: str) -> None:
+        item: Optional[MenuItem] = MenuItem.query.get(item_id)
+        if item is None:
+            raise ValueError(f"Menu item with id {item_id} not found.")
+
+        item.price = price
+        if category:
+            item.category = category.strip()
+        if description:
+            item.description = description.strip()
+
+        db.session.commit()
+
+
+
+
 

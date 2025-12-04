@@ -14,8 +14,8 @@ package "Presentation Layer" {
     class CashierUI {
         +start()
         +showOrderList()
-        +showOrderDetails(orderID: String)
-        +showCounterPayment(orderID: String)
+        +showOrderDetails(orderID: int)
+        +showCounterPayment(orderID: int)
     }
 
     class KitchenUI {
@@ -32,63 +32,65 @@ package "Presentation Layer" {
     class CustomerAppController {
         +startOrder()
         +browseMenu()
-        +addItemToOrder(itemID: String, quantity: int, customizations: String)
+        +addItemToOrder(itemID: int, quantity: int, customizations: String)
         +reviewCurrentOrder(): Order
-        +confirmOrder(paymentOption: String)
+        +confirmOrder(): Order
         +payOnSystem(cardInfo: String)
     }
 
     class CashierAppController {
         +listPendingCounterPayments(): List<Order>
-        +findOrder(orderNumber: String): Order
-        +completeCounterPayment(orderNumber: String, paymentMethod: String)
+        +findOrder(orderID: int): Order
+        +completeCounterPayment(orderID: int, paymentMethod: String)
     }
 
     class KitchenAppController {
         +getOrderQueue(): List<Order>
-        +markInPreparation(orderID: String)
-        +markReady(orderID: String)
-        +cancelOrder(orderID: String)
+        +markInPreparation(orderID: int)
+        +markReady(orderID: int)
+        +cancelOrder(orderID: int)
     }
 
     class ManagerAppController {
         +listMenuItems(): List<MenuItem>
         +addMenuItem(name: String, price: double, category: String, description: String)
-        +updateMenuItem(itemID: String, price: double, description: String)
+        +updateMenuItem(itemID: int, price: double, description: String)
         +showDailySalesSummary(date: Date): DailySalesSummary
     }
 }
 
-' Application Layer
-package "Application Layer" {
+' Domain Layer
+package "Domain Layer" {
     class OrderingService {
         +createOrder(): Order
-        +addItem(orderID: String, itemID: String, quantity: int, customizations: String)
-        +editItem(orderID: String, itemID: String, quantity: int, customizations: String)
-        +removeItem(orderID: String, itemID: String)
-        +reviewOrder(orderID: String): Order
-        +getOrderByNumber(orderNumber: String): Order
+        +addItem(orderID: int, itemID: int, quantity: int, customizations: String)
+        +editItem(orderID: int, itemID: int, quantity: int, customizations: String)
+        +removeItem(orderID: int, itemID: int)
+        +reviewOrder(orderID: int): Order
+        +getOrderByID(orderID: int): Order
+        +confirmOrder(orderID: int): void
+        -updateOrderTotals(orderID: int): void
     }
 
     class PaymentService {
-        +confirmOrder(orderID: String, paymentOption: String)
-        +processSystemCardPayment(orderID: String, cardInfo: String): Payment
-        +markPayAtCounter(orderID: String)
-        +completeCounterPayment(orderNumber: String, paymentMethod: String): Payment
+        +processSystemCardPayment(orderID: int, cardInfo: String): Payment
+        +markPayAtCounter(orderID: int)
+        +completeCounterPayment(orderID: int, paymentMethod: String): Payment
     }
 
     class KitchenService {
         +getOrderQueue(): List<Order>
-        +updateOrderStatus(orderID: String, status: String)
-        +cancelOrder(orderID: String)
+        +updateOrderStatus(orderID: int, status: String)
+        +cancelOrder(orderID: int)
     }
 
     class MenuService {
         +getMenuCategories(): List<String>
         +getMenuItemsByCategory(category: String): List<MenuItem>
-        +getItemDetails(itemID: String): MenuItem
+        +getItemDetails(itemID: int): MenuItem
         +addNewMenuItem(name: String, price: double, category: String, description: String): MenuItem
-        +updateExistingMenuItem(itemID: String, price: double, description: String): void
+        +updateExistingMenuItem(itemID: int, price: double, category: String, description: String): void
+        +getMenuItemById(itemID: int): MenuItem
     }
 
     class ReportService {
@@ -96,14 +98,12 @@ package "Application Layer" {
     }
 }
 
-' Domain Layer
-package "Domain Layer" {
+' Datasource Layer
+package "Datasource Layer" {
     class Order {
         -id: String
-        -orderNumber: String
         -items: List<OrderItem>
         -status: String
-        -paymentStatus: String
         -createdAt: Date
         -totalAmount: double
         +calculateTotal(): double
@@ -127,7 +127,7 @@ package "Domain Layer" {
 
     class Payment {
         -id: String
-        -orderId: String
+        -orderID: int
         -amount: double
         -method: String
         -status: String
@@ -143,9 +143,10 @@ package "Domain Layer" {
 
     interface OrderInterface {
         +save(order: Order): void
+        +get()
         +findById(id: String): Order
-        +findByNumber(orderNumber: String): Order
         +findByStatus(status: String): List<Order>
+
     }
 
     interface MenuInterface {

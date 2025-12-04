@@ -78,7 +78,7 @@ class ManagerAppController {
         : date.toISOString().split('T')[0];
       
       const response = await apiClient.get<Types.ApiResponse<Types.DailySalesSummary>>(
-        `/reports/daily?date=${dateString}`
+        `/reports/sales-summary/${dateString}`
       );
       
       if (response.data.data) {

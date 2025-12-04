@@ -20,21 +20,11 @@ def add_item_to_order(order_id):
     """
     try:
         data = request.get_json()
-        if not data:
-            return jsonify({
-                'error': 'Request body is required',
-                'status': 'error'
-            }), 400
         
         menu_item_id = data.get('menu_item_id')
-        quantity = data.get('quantity', 1)
-        customizations = data.get('customizations', {})
+        quantity = data.get('quantity')
+        customizations = data.get('customizations')
         
-        if not menu_item_id:
-            return jsonify({
-                'error': 'menu_item_id is required',
-                'status': 'error'
-            }), 400
         
         if quantity <= 0:
             return jsonify({
@@ -42,20 +32,19 @@ def add_item_to_order(order_id):
                 'status': 'error'
             }), 400
         
-        order_item = OrderService.add_item_to_order(
+        order = OrderService.add_item_to_order(
             order_id=order_id,
             menu_item_id=menu_item_id,
             quantity=quantity,
             customizations=customizations
         )
         
-        order = OrderService.get_order_by_id(order_id)
-        
         return jsonify({
-            'order_item': order_item.to_dict(),
-            'order': order.to_dict(),
+            'message': 'Item added to order',
+            'data':order.to_dict(),
             'status': 'success'
-        }), 201
+        }), 200
+        
     except ValueError as e:
         return jsonify({
             'error': str(e),
@@ -66,6 +55,8 @@ def add_item_to_order(order_id):
             'error': str(e),
             'status': 'error'
         }), 500
+                
+        
 
 # UC5: Review and Edit Current Order
 @order_bp.route('/<int:order_id>', methods=['GET'])
@@ -77,62 +68,45 @@ def get_order(order_id):
     try:
         order = OrderService.get_order_by_id(order_id)
         
-        if not order:
-            return jsonify({
-                'error': 'Order not found',
-                'status': 'error'
-            }), 404
-        
         return jsonify({
-            'order': order.to_dict(),
+            'data': order.to_dict(),
             'status': 'success'
         }), 200
+    except ValueError as e:
+        return jsonify({
+            'error': str(e),
+            'status': 'error'
+        }), 404
     except Exception as e:
         return jsonify({
             'error': str(e),
             'status': 'error'
         }), 500
 
-@order_bp.route('/<int:order_id>/items/<int:item_id>', methods=['PUT'])
-def update_order_item(order_id, item_id):
+@order_bp.route('/<int:order_id>/items', methods=['PUT'])
+def update_order_item(order_id):
     """
     UC5: Review and Edit Current Order
     Update quantity of an order item
-    Body: { "quantity": 2 }
+    Body: {
+        "menu_item_id": 1,
+        "quantity": 3,
+        "customizations": "please add more cheese"
+    }
     """
     try:
         data = request.get_json()
-        if not data:
-            return jsonify({
-                'error': 'Request body is required',
-                'status': 'error'
-            }), 400
+        menu_item_id = int(data.get('menu_item_id'))
+        quantity = int(data.get('quantity'))
+        customizations = data.get('customizations')
         
-        quantity = data.get('quantity')
-        if quantity is None:
-            return jsonify({
-                'error': 'quantity is required',
-                'status': 'error'
-            }), 400
-        
-        order_item = OrderService.update_order_item_quantity(item_id, quantity)
-        
-        if order_item is None:
-            # Item was removed
-            order = OrderService.get_order_by_id(order_id)
-            return jsonify({
-                'message': 'Item removed from order',
-                'order': order.to_dict(),
-                'status': 'success'
-            }), 200
-        
-        order = OrderService.get_order_by_id(order_id)
+        order = OrderService.edit_item_on_order(order_id, menu_item_id, quantity, customizations)
         
         return jsonify({
-            'order_item': order_item.to_dict(),
-            'order': order.to_dict(),
+            'data': order.to_dict(),
             'status': 'success'
         }), 200
+        
     except ValueError as e:
         return jsonify({
             'error': str(e),
@@ -151,68 +125,17 @@ def remove_order_item(order_id, item_id):
     Remove an item from the order
     """
     try:
-        OrderService.remove_item_from_order(item_id)
-        
-        order = OrderService.get_order_by_id(order_id)
-        
+        order = OrderService.remove_item_from_order(order_id, item_id)
         return jsonify({
             'message': 'Item removed from order',
-            'order': order.to_dict(),
-            'status': 'success'
+            'status': 'success',
+            'data': order.to_dict()
         }), 200
     except ValueError as e:
         return jsonify({
             'error': str(e),
             'status': 'error'
         }), 404
-    except Exception as e:
-        return jsonify({
-            'error': str(e),
-            'status': 'error'
-        }), 500
-
-# UC6: Confirm Order and Proceed to Payment
-@order_bp.route('/<int:order_id>/finalize', methods=['POST'])
-def finalize_order(order_id):
-    """
-    UC6: Confirm Order and Proceed to Payment
-    Finalize order and set payment method
-    Body: { "payment_method": "card_at_system" | "cash_at_counter" | "card_at_counter" }
-    """
-    try:
-        data = request.get_json()
-        if not data:
-            return jsonify({
-                'error': 'Request body is required',
-                'status': 'error'
-            }), 400
-        
-        payment_method = data.get('payment_method')
-        if not payment_method:
-            return jsonify({
-                'error': 'payment_method is required',
-                'status': 'error'
-            }), 400
-        
-        valid_methods = ['card_at_system', 'cash_at_counter', 'card_at_counter']
-        if payment_method not in valid_methods:
-            return jsonify({
-                'error': f'payment_method must be one of: {", ".join(valid_methods)}',
-                'status': 'error'
-            }), 400
-        
-        order = OrderService.finalize_order_for_payment(order_id, payment_method)
-        
-        return jsonify({
-            'order': order.to_dict(),
-            'message': 'Order finalized. Proceed to payment.',
-            'status': 'success'
-        }), 200
-    except ValueError as e:
-        return jsonify({
-            'error': str(e),
-            'status': 'error'
-        }), 400
     except Exception as e:
         return jsonify({
             'error': str(e),
@@ -228,7 +151,7 @@ def create_order():
     try:
         order = OrderService.create_order()
         return jsonify({
-            'order': order.to_dict(),
+            'data': order.to_dict(),
             'status': 'success'
         }), 201
     except Exception as e:
@@ -237,22 +160,38 @@ def create_order():
             'status': 'error'
         }), 500
 
-@order_bp.route('/number/<order_number>', methods=['GET'])
-def get_order_by_number(order_number):
+# confirm order
+@order_bp.route('<int:order_id>/confirm', methods=['PUT'])
+def confirm_order(order_id:int):
     """
-    Get order by order number
+    Create a new empty order
     """
     try:
-        order = OrderService.get_order_by_number(order_number)
-        
-        if not order:
-            return jsonify({
-                'error': 'Order not found',
-                'status': 'error'
-            }), 404
-        
+        order = OrderService.confirmOrder(order_id)
         return jsonify({
-            'order': order.to_dict(),
+            'message': 'order confirmed.',
+            'data': order.to_dict(),
+            'status': 'success'
+        }), 200
+    except ValueError as e:
+        return jsonify({
+            'error': str(e),
+            'status': 'error'
+        }), 404
+    except Exception as e:
+        return jsonify({
+            'error': str(e),
+            'status': 'error'
+        }), 500
+        
+@order_bp.route('/counter-confirmed', methods=['GET'])
+def get_counter_confirmed_orders() -> list[Dict]:
+    """Get all unpaid orders (for cashier)"""
+    try:
+        orders = OrderService.get_counter_confirmed_orders()
+        orders_data = [order.to_dict() for order in orders]
+        return jsonify({
+            'data': orders_data,
             'status': 'success'
         }), 200
     except Exception as e:
@@ -260,4 +199,3 @@ def get_order_by_number(order_number):
             'error': str(e),
             'status': 'error'
         }), 500
-

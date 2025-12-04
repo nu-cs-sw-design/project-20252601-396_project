@@ -27,7 +27,7 @@ export default function CounterPayment({ order, onBack, onPaymentComplete }: Cou
     try {
       // Call backend API to complete payment
       await cashierAppController.completeCounterPayment(
-        order.orderNumber,
+        order.id,
         paymentMethod
       );
 
@@ -50,7 +50,7 @@ export default function CounterPayment({ order, onBack, onPaymentComplete }: Cou
         <div className="bg-white rounded-2xl shadow-xl p-12 text-center max-w-md">
           <CheckCircle size={64} className="text-green-500 mx-auto mb-4" />
           <h2 className="text-3xl font-bold text-gray-800 mb-2">Payment Successful!</h2>
-          <p className="text-gray-600 mb-4">Order #{order.orderNumber} has been paid</p>
+          <p className="text-gray-600 mb-4">Order #{order.id} has been paid</p>
           <p className="text-sm text-gray-500">Redirecting...</p>
         </div>
       </div>
@@ -76,7 +76,7 @@ export default function CounterPayment({ order, onBack, onPaymentComplete }: Cou
             <div className="flex justify-between items-center">
               <div>
                 <p className="text-sm text-gray-500">Order Number</p>
-                <p className="text-xl font-bold">#{order.orderNumber}</p>
+                <p className="text-xl font-bold">#{order.id}</p>
               </div>
               <div className="text-right">
                 <p className="text-sm text-gray-500">Total Amount</p>

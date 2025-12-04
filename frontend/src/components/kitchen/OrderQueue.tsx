@@ -54,7 +54,7 @@ export default function OrderQueue({ onOrderSelect }: OrderQueueProps) {
     }
   };
 
-  const handleMarkInPreparation = async (orderId: string) => {
+  const handleMarkInPreparation = async (orderId: number) => {
     try {
       await kitchenAppController.markInPreparation(orderId);
       loadOrders();
@@ -64,7 +64,7 @@ export default function OrderQueue({ onOrderSelect }: OrderQueueProps) {
     }
   };
 
-  const handleMarkReady = async (orderId: string) => {
+  const handleMarkReady = async (orderId: number) => {
     try {
       await kitchenAppController.markReady(orderId);
       loadOrders();
@@ -74,7 +74,7 @@ export default function OrderQueue({ onOrderSelect }: OrderQueueProps) {
     }
   };
 
-  const handleCancelOrder = async (orderId: string) => {
+  const handleCancelOrder = async (orderId: number) => {
     if (window.confirm("Are you sure you want to cancel this order?")) {
       try {
         await kitchenAppController.cancelOrder(orderId);
@@ -142,14 +142,14 @@ export default function OrderQueue({ onOrderSelect }: OrderQueueProps) {
               All Orders
             </button>
             <button
-              onClick={() => setFilter(Types.OrderStatus.CONFIRMED)}
+              onClick={() => setFilter(Types.OrderStatus.PAID)}
               className={`px-4 py-2 rounded-lg font-semibold transition ${
-                filter === Types.OrderStatus.CONFIRMED
+                filter === Types.OrderStatus.PAID
                   ? "bg-red-600 text-white"
                   : "bg-white text-gray-800 hover:bg-gray-100"
               }`}
             >
-              Confirmed
+              Paid
             </button>
             <button
               onClick={() => setFilter(Types.OrderStatus.PREPARING)}
@@ -160,16 +160,6 @@ export default function OrderQueue({ onOrderSelect }: OrderQueueProps) {
               }`}
             >
               Preparing
-            </button>
-            <button
-              onClick={() => setFilter(Types.OrderStatus.READY)}
-              className={`px-4 py-2 rounded-lg font-semibold transition ${
-                filter === Types.OrderStatus.READY
-                  ? "bg-red-600 text-white"
-                  : "bg-white text-gray-800 hover:bg-gray-100"
-              }`}
-            >
-              Ready
             </button>
           </div>
         </div>
@@ -190,7 +180,7 @@ export default function OrderQueue({ onOrderSelect }: OrderQueueProps) {
               >
                 <div className="flex justify-between items-start mb-4">
                   <div>
-                    <h3 className="text-2xl font-bold text-gray-800">Order #{order.orderNumber}</h3>
+                    <h3 className="text-2xl font-bold text-gray-800">Order #{order.id}</h3>
                     <p className="text-sm text-gray-500 mt-1">ID: {order.id}</p>
                   </div>
                   <span className={`px-3 py-1 rounded-full text-sm font-semibold ${getStatusColor(order.status)}`}>
@@ -223,7 +213,7 @@ export default function OrderQueue({ onOrderSelect }: OrderQueueProps) {
 
                 {/* Action Buttons */}
                 <div className="flex gap-2 mt-4">
-                  {order.status === Types.OrderStatus.CONFIRMED && (
+                  {order.status === Types.OrderStatus.PAID && (
                     <button
                       onClick={() => handleMarkInPreparation(order.id)}
                       className="flex-1 bg-yellow-600 text-white py-2 px-4 rounded-lg font-semibold hover:bg-yellow-700 transition flex items-center justify-center gap-2"

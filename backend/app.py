@@ -31,11 +31,15 @@ def create_app():
     from routes.menu_routes import menu_bp
     from routes.order_routes import order_bp
     from routes.payment_routes import payment_bp
+    from routes.kitchen_routes import kitchen_bp
+    from routes.report_routes import report_bp
     
     app.register_blueprint(main_bp)
     app.register_blueprint(menu_bp)
     app.register_blueprint(order_bp)
     app.register_blueprint(payment_bp)
+    app.register_blueprint(kitchen_bp)
+    app.register_blueprint(report_bp)
     
     @app.route('/')
     def health_check():

@@ -37,8 +37,6 @@ export default function OrderPayment({
           return;
         }
 
-        // First confirm the order
-        await customerAppController.confirmOrder(order.id, "system");
         
         // Then process payment
         const cardInfoString = JSON.stringify(cardInfo);
@@ -47,8 +45,8 @@ export default function OrderPayment({
         alert("Payment processed successfully!");
       } else {
         // Mark as pay at counter
-        await customerAppController.confirmOrder(order.id, "counter");
-        alert("Order confirmed. Please pay at the counter when picking up.");
+        const confirmedOrder = await customerAppController.confirmOrder(order.id);
+        alert(`Order confirmed. Please pay at the counter with order number ${confirmedOrder.id}.`);
       }
 
       // Reset and go back to welcome screen

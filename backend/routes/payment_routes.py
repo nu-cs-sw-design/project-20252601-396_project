@@ -23,23 +23,14 @@ def process_payment_at_system():
                 'status': 'error'
             }), 400
         
+        
         order_id = data.get('order_id')
-        if not order_id:
-            return jsonify({
-                'error': 'order_id is required',
-                'status': 'error'
-            }), 400
+        card_info = data.get('card_info')
         
-        # Process payment
-        payment = PaymentService.process_payment_at_system(order_id)
-        
-        # Get updated order
-        order = OrderService.get_order_by_id(order_id)
+        payment = PaymentService.process_payment_at_system(order_id, card_info)
         
         return jsonify({
-            'payment': payment.to_dict(),
-            'order': order.to_dict(),
-            'order_number': order.order_number,
+            'data': payment.to_dict(),
             'message': 'Payment approved. Order sent to kitchen.',
             'status': 'success'
         }), 200
@@ -74,38 +65,14 @@ def process_payment_at_counter():
         
         order_id = data.get('order_id')
         payment_method = data.get('payment_method')
-        
-        if not order_id:
-            return jsonify({
-                'error': 'order_id is required',
-                'status': 'error'
-            }), 400
-        
-        if not payment_method:
-            return jsonify({
-                'error': 'payment_method is required',
-                'status': 'error'
-            }), 400
-        
-        valid_methods = ['cash_at_counter', 'card_at_counter']
-        if payment_method not in valid_methods:
-            return jsonify({
-                'error': f'payment_method must be one of: {", ".join(valid_methods)}',
-                'status': 'error'
-            }), 400
-        
-        # Process payment
         payment = PaymentService.process_payment_at_counter(order_id, payment_method)
         
-        # Get updated order
-        order = OrderService.get_order_by_id(order_id)
-        
         return jsonify({
-            'payment': payment.to_dict(),
-            'order': order.to_dict(),
+            'data': payment.to_dict(),
             'message': 'Payment processed successfully. Order sent to kitchen.',
             'status': 'success'
         }), 200
+        
     except ValueError as e:
         return jsonify({
             'error': str(e),

@@ -8,7 +8,7 @@ export default function ReviewOrder({
   handleReset,
   handleProceedToPayment 
 }: { 
-  orderId: string, 
+  orderId: number, 
   handleReset:()=>void,
   handleProceedToPayment?: (order: Types.Order) => void
 }) {
@@ -26,15 +26,13 @@ export default function ReviewOrder({
       const currentItem = orderSummary?.items.find(item => item.menuItem.id === itemId);
       const customizations = currentItem?.customizations || "";
 
-      await customerAppController.editItemInOrder(
+      const updatedOrder = await customerAppController.editItemInOrder(
         orderId,
         itemId,
         quantity,
         customizations
       );
       
-      // Reload order to get updated data
-      const updatedOrder = await customerAppController.reviewCurrentOrder(orderId);
       setOrderSummary(updatedOrder);
     } catch (err) {
       console.error("API Error:", err);

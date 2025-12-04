@@ -16,7 +16,7 @@ export default function OrderDetails({ order, onBack, onProceedToPayment }: Orde
     // Refresh order details
     const loadOrderDetails = async () => {
       try {
-        const updatedOrder = await cashierAppController.findOrder(order.orderNumber);
+        const updatedOrder = await cashierAppController.findOrder(order.id);
         setOrderDetails(updatedOrder);
       } catch (error) {
         console.error("Error loading order details:", error);
@@ -25,7 +25,7 @@ export default function OrderDetails({ order, onBack, onProceedToPayment }: Orde
       }
     };
     loadOrderDetails();
-  }, [order.id, order.orderNumber]);
+  }, [order.id]);
 
   if (!orderDetails) {
     return (
@@ -59,7 +59,7 @@ export default function OrderDetails({ order, onBack, onProceedToPayment }: Orde
           <div className="grid grid-cols-2 gap-4 mb-4">
             <div>
               <p className="text-sm text-gray-500">Order Number</p>
-              <p className="text-xl font-bold">#{orderDetails.orderNumber}</p>
+              <p className="text-xl font-bold">#{orderDetails.id}</p>
             </div>
             <div>
               <p className="text-sm text-gray-500">Order ID</p>
@@ -80,15 +80,6 @@ export default function OrderDetails({ order, onBack, onProceedToPayment }: Orde
                 : "bg-gray-100 text-gray-800"
             }`}>
               {orderDetails.status}
-            </span>
-            <span className={`px-3 py-1 rounded-full text-sm font-semibold ${
-              orderDetails.paymentStatus === Types.PaymentStatus.PENDING
-                ? "bg-red-100 text-red-800"
-                : orderDetails.paymentStatus === Types.PaymentStatus.COMPLETED
-                ? "bg-green-100 text-green-800"
-                : "bg-gray-100 text-gray-800"
-            }`}>
-              Payment: {orderDetails.paymentStatus}
             </span>
           </div>
         </div>
@@ -154,7 +145,7 @@ export default function OrderDetails({ order, onBack, onProceedToPayment }: Orde
         </div>
 
         {/* Action Button */}
-        {orderDetails.paymentStatus === Types.PaymentStatus.PENDING && (
+        {orderDetails.status === Types.OrderStatus.CONFIRMED && (
           <button
             onClick={() => onProceedToPayment(orderDetails)}
             className="w-full bg-red-600 text-white py-4 rounded-xl text-xl font-bold hover:bg-red-700 transition"

@@ -6,7 +6,7 @@ class KitchenAppController {
   async getOrderQueue(): Promise<Types.Order[]> {
     try {
       const response = await apiClient.get<Types.ApiResponse<Types.Order[]>>(
-        '/kitchen/queue'
+        '/kitchen/order-queue'
       );
       
       if (response.data.data) {
@@ -21,10 +21,10 @@ class KitchenAppController {
   }
 
   // Mark order as in preparation
-  async markInPreparation(orderID: string): Promise<void> {
+  async markInPreparation(orderID: number): Promise<void> {
     try {
       await apiClient.put<Types.ApiResponse<void>>(
-        `/kitchen/orders/${orderID}/status`,
+        `/kitchen/update-order-status/${orderID}`,
         { status: Types.OrderStatus.PREPARING }
       );
     } catch (error: any) {
@@ -34,10 +34,10 @@ class KitchenAppController {
   }
 
   // Mark order as ready
-  async markReady(orderID: string): Promise<void> {
+  async markReady(orderID: number): Promise<void> {
     try {
       await apiClient.put<Types.ApiResponse<void>>(
-        `/kitchen/orders/${orderID}/status`,
+        `/kitchen/update-order-status/${orderID}`,
         { status: Types.OrderStatus.READY }
       );
     } catch (error: any) {
@@ -47,7 +47,7 @@ class KitchenAppController {
   }
 
   // Cancel an order
-  async cancelOrder(orderID: string): Promise<void> {
+  async cancelOrder(orderID: number): Promise<void> {
     try {
       await apiClient.delete<Types.ApiResponse<void>>(
         `/kitchen/orders/${orderID}`

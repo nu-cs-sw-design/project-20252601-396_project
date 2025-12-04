@@ -55,6 +55,10 @@ def client(app):
     """Create test client"""
     return app.test_client()
 
+import pytest
+from datetime import datetime
+from your_app.models import MenuItem, db  # adjust import paths
+
 @pytest.fixture(scope='function')
 def sample_menu_items(app):
     """Create sample menu items for testing"""
@@ -64,35 +68,19 @@ def sample_menu_items(app):
                 name="Classic Burger",
                 description="Juicy beef patty",
                 price=8.99,
-                category="Burgers",
-                image_url="/images/classic-burger.jpg",
-                customization_options={
-                    "size": ["regular", "large"],
-                    "toppings": ["lettuce", "tomato"]
-                },
-                is_available=True
+                category="Burgers"
             ),
             MenuItem(
                 name="French Fries",
                 description="Crispy golden fries",
                 price=3.99,
-                category="Sides",
-                image_url="/images/fries.jpg",
-                customization_options={
-                    "size": ["small", "medium", "large"]
-                },
-                is_available=True
+                category="Sides"
             ),
             MenuItem(
                 name="Coca Cola",
                 description="Refreshing cola drink",
                 price=2.49,
-                category="Drinks",
-                image_url="/images/coke.jpg",
-                customization_options={
-                    "size": ["small", "medium", "large"]
-                },
-                is_available=True
+                category="Drinks"
             ),
         ]
         
@@ -101,10 +89,9 @@ def sample_menu_items(app):
         db.session.commit()
         
         # Make items accessible by storing IDs and re-querying when needed
-        # This ensures items are always fresh from the database
         item_ids = [item.id for item in items]
         
-        # Create a list-like object that re-queries items when accessed
+        # List-like object that re-queries items when accessed
         class FreshMenuItems:
             def __init__(self, app_instance, ids):
                 self.app = app_instance
@@ -123,4 +110,5 @@ def sample_menu_items(app):
                 return len(self.ids)
         
         return FreshMenuItems(app, item_ids)
+
 

@@ -3,13 +3,13 @@ import * as Types from '../types/index';
 import { Payment } from '../types/index';
 
 class CustomerAppController {
-  private currentOrderId: string | null = null;
+  private currentOrderId: number | null = null;
 
   // Start a new order
   async startOrder(): Promise<Types.Order> {
     try {
-      const response = await apiClient.post<Types.ApiResponse<Types.Order>>('/orders');
-      
+      const response = await apiClient.post<Types.ApiResponse<Types.Order>>(`/orders`);
+      console.log('Start Order Responseee:', response.data.data);
       if (response.data.data) {
         this.currentOrderId = response.data.data.id;
         return response.data.data;
@@ -17,7 +17,6 @@ class CustomerAppController {
       
       throw new Error('Failed to create order: No order data returned');
     } catch (error: any) {
-      console.error('Error starting order:', error);
       throw new Error(error.response?.data?.message || 'Failed to create order');
     }
   }
@@ -42,7 +41,7 @@ class CustomerAppController {
   async getMenuItemsByCategory(category: string): Promise<Types.MenuItem[]> {
     try {
       const response = await apiClient.get<Types.ApiResponse<Types.MenuItem[]>>(
-        `/menu/category/${encodeURIComponent(category)}`
+        `/menu/items-by-category/${encodeURIComponent(category)}`
       );
       
       if (response.data.data) {
@@ -76,7 +75,7 @@ class CustomerAppController {
 
   // Add item to order
   async addItemToOrder(
-    orderID: string,
+    orderID: number,
     itemID: string,
     quantity: number,
     customizations: string
@@ -85,7 +84,7 @@ class CustomerAppController {
       const response = await apiClient.post<Types.ApiResponse<Types.Order>>(
         `/orders/${orderID}/items`,
         {
-          itemID,
+          menu_item_id: itemID,
           quantity,
           customizations
         }
@@ -104,15 +103,16 @@ class CustomerAppController {
 
   // Edit item in order
   async editItemInOrder(
-    orderID: string,
+    orderID: number,
     itemID: string,
     quantity: number,
     customizations: string
   ): Promise<Types.Order> {
     try {
       const response = await apiClient.put<Types.ApiResponse<Types.Order>>(
-        `/orders/${orderID}/items/${itemID}`,
+        `/orders/${orderID}/items`,
         {
+          menu_item_id: itemID,
           quantity,
           customizations
         }
@@ -130,7 +130,7 @@ class CustomerAppController {
   }
 
   // Remove item from order
-  async removeItemFromOrder(orderID: string, itemID: string): Promise<Types.Order> {
+  async removeItemFromOrder(orderID: number, itemID: string): Promise<Types.Order> {
     try {
       const response = await apiClient.delete<Types.ApiResponse<Types.Order>>(
         `/orders/${orderID}/items/${itemID}`
@@ -148,7 +148,7 @@ class CustomerAppController {
   }
 
   // Review current order
-  async reviewCurrentOrder(orderID: string): Promise<Types.Order> {
+  async reviewCurrentOrder(orderID: number): Promise<Types.Order> {
     try {
       const response = await apiClient.get<Types.ApiResponse<Types.Order>>(
         `/orders/${orderID}`
@@ -166,28 +166,17 @@ class CustomerAppController {
   }
 
   // Confirm order and select payment option
-  async confirmOrder(orderID: string, paymentOption: string): Promise<Types.Order> {
+  async confirmOrder(orderID: number): Promise<Types.Order> {
     try {
-      if (paymentOption === 'counter') {
         // Mark as pay at counter
-        const response = await apiClient.post<Types.ApiResponse<Types.Order>>(
-          `/orders/${orderID}/payment/counter/mark`
+        const response = await apiClient.put<Types.ApiResponse<Types.Order>>(
+          `/orders/${orderID}/confirm`
         );
         
         if (response.data.data) {
           return response.data.data;
         }
-      } else {
-        // Confirm order with payment option
-        const response = await apiClient.post<Types.ApiResponse<Types.Order>>(
-          `/orders/${orderID}/confirm`,
-          { paymentOption }
-        );
-        
-        if (response.data.data) {
-          return response.data.data;
-        }
-      }
+      
       
       throw new Error('Failed to confirm order: No order data returned');
     } catch (error: any) {
@@ -197,15 +186,15 @@ class CustomerAppController {
   }
 
   // Pay on system using card
-  async payOnSystem(orderID: string, cardInfo: string | object): Promise<Payment> {
+  async payOnSystem(orderID: number, cardInfo: string): Promise<Payment> {
     try {
       const cardInfoString = typeof cardInfo === 'string' 
         ? cardInfo 
         : JSON.stringify(cardInfo);
       
       const response = await apiClient.post<Types.ApiResponse<Payment>>(
-        `/orders/${orderID}/payment/system`,
-        { cardInfo: cardInfoString }
+        `/payments/process-system`,
+        { order_id: orderID, card_info: cardInfoString }
       );
       
       if (response.data.data) {
@@ -219,11 +208,11 @@ class CustomerAppController {
     }
   }
 
-  getCurrentOrderId(): string | null {
+  getCurrentOrderId(): number | null {
     return this.currentOrderId;
   }
 
-  setCurrentOrderId(orderId: string | null): void {
+  setCurrentOrderId(orderId: number | null): void {
     this.currentOrderId = orderId;
   }
 

@@ -39,7 +39,7 @@ export default function OrderList({ onOrderSelect }: OrderListProps) {
   const handleSearch = async () => {
     if (searchTerm.trim()) {
       try {
-        const order = await cashierAppController.findOrder(searchTerm.trim());
+        const order = await cashierAppController.findOrder(Number(searchTerm.trim()));
         onOrderSelect(order);
         setSearchTerm("");
       } catch (error) {
@@ -112,7 +112,7 @@ export default function OrderList({ onOrderSelect }: OrderListProps) {
               >
                 <div className="flex justify-between items-start mb-4">
                   <div>
-                    <h3 className="text-2xl font-bold text-gray-800">Order #{order.orderNumber}</h3>
+                    <h3 className="text-2xl font-bold text-gray-800">Order #{order.id}</h3>
                     <p className="text-sm text-gray-500 mt-1">ID: {order.id}</p>
                   </div>
                   <span className={`px-3 py-1 rounded-full text-sm font-semibold ${

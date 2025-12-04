@@ -7,29 +7,17 @@ from typing import Dict
 
 menu_bp = Blueprint('menu', __name__, url_prefix='/api/menu')
 
-# UC1: Start the System - Welcome message and main menu
-@menu_bp.route('/welcome', methods=['GET'])
-def get_welcome():
-    """
-    UC1: Start the System
-    Returns welcome message and indicates system is ready
-    """
-    return jsonify({
-        'message': 'Welcome to Fast Food Ordering System',
-        'status': 'ready',
-        'main_menu_available': True
-    }), 200
 
-# UC2: Browse Menu - Get categories and menu items
+# UC2: Browse Menu - Get categories
 @menu_bp.route('/categories', methods=['GET'])
 def get_categories():
     """
     UC2: Browse Menu - Get all menu categories
     """
     try:
-        categories = MenuService.get_all_categories()
+        categories = MenuService.getMenuCategories()
         return jsonify({
-            'categories': categories,
+            'data': categories,
             'status': 'success'
         }), 200
     except Exception as e:
@@ -38,23 +26,34 @@ def get_categories():
             'status': 'error'
         }), 500
 
-@menu_bp.route('/items', methods=['GET'])
-def get_menu_items():
+@menu_bp.route('/items-by-category/<string:category>', methods=['GET'])
+def get_menu_items(category: str):
     """
     UC2: Browse Menu - Get menu items
     Query params:
         - category: Filter by category (optional)
     """
-    try:
-        category = request.args.get('category')
+    try:        
         
-        if category:
-            items = MenuService.get_menu_items_by_category(category)
-        else:
-            items = MenuService.get_all_menu_items()
+        items = MenuService.getMenuItemsByCategory(category)
         
         return jsonify({
-            'items': [item.to_dict() for item in items],
+            'data': [item.to_dict() for item in items],
+            'status': 'success'
+        }), 200
+    except Exception as e:
+        return jsonify({
+            'error': str(e),
+            'status': 'error'
+        }), 500
+        
+@menu_bp.route('/items', methods=['GET'])
+def get_all_menu_items():
+    
+    try:        
+        items = MenuService.getAllMenuItems()
+        return jsonify({
+            'data': [item.to_dict() for item in items],
             'status': 'success'
         }), 200
     except Exception as e:
@@ -70,16 +69,9 @@ def get_menu_item(item_id):
     Get detailed information about a menu item including customization options
     """
     try:
-        item = MenuService.get_menu_item_by_id(item_id)
-        
-        if not item:
-            return jsonify({
-                'error': 'Menu item not found',
-                'status': 'error'
-            }), 404
-        
+        item = MenuService.getItemDetails(item_id)
         return jsonify({
-            'item': item.to_dict(),
+            'data': item.to_dict(),
             'status': 'success'
         }), 200
     except Exception as e:
@@ -88,36 +80,55 @@ def get_menu_item(item_id):
             'status': 'error'
         }), 500
 
-@menu_bp.route('/items/<int:item_id>/calculate-price', methods=['POST'])
-def calculate_customized_price(item_id):
-    """
-    UC3: View Item Details and Customize Item
-    Calculate price with customizations
-    Body: { "customizations": {...} }
-    """
+
+@menu_bp.route('/items', methods=['POST'])
+def add_new_menu_item():
+    data = request.get_json()
     try:
-        item = MenuService.get_menu_item_by_id(item_id)
-        if not item:
+        name = data.get('name')
+        price = data.get('price')
+        category = data.get('category')
+        description = data.get('description', '')
+
+        if not all([name, price, category]):
             return jsonify({
-                'error': 'Menu item not found',
+                'error': 'Missing required fields',
                 'status': 'error'
-            }), 404
-        
-        data = request.get_json() or {}
-        customizations = data.get('customizations', {})
-        
-        base_price = item.price
-        customized_price = MenuService.calculate_customized_price(base_price, customizations)
-        
+            }), 400
+
+        item = MenuService.addNewMenuItem(name, price, category, description)
+
         return jsonify({
-            'base_price': base_price,
-            'customized_price': customized_price,
-            'customizations': customizations,
+            'data': item.to_dict(),
             'status': 'success'
         }), 200
+
     except Exception as e:
         return jsonify({
             'error': str(e),
             'status': 'error'
         }), 500
+        
+@menu_bp.route('/items/<int:item_id>', methods=['PUT'])
+def update_menu_item(item_id: int):
+    try:
+        data = request.get_json()
+        price = data.get('price')
+        category = data.get('category')
+        description = data.get('description', '')
+        MenuService.updateExistingMenuItem(item_id, price, category, description)
 
+        return jsonify({
+            'status': 'success'
+        }), 200
+
+    except ValueError as ve:
+        return jsonify({
+            'error': str(ve),
+            'status': 'error'
+        }), 404
+    except Exception as e:
+        return jsonify({
+            'error': str(e),
+            'status': 'error'
+        }), 500

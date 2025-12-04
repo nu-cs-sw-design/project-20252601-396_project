@@ -7,7 +7,7 @@ class CashierAppController {
   async listPendingCounterPayments(): Promise<Types.Order[]> {
     try {
       const response = await apiClient.get<Types.ApiResponse<Types.Order[]>>(
-        '/orders?paymentStatus=pending&paymentOption=counter'
+        '/orders/counter-confirmed'
       );
       
       if (response.data.data) {
@@ -22,10 +22,10 @@ class CashierAppController {
   }
 
   // Find order by order number
-  async findOrder(orderNumber: string): Promise<Types.Order> {
+  async findOrder(orderID: number): Promise<Types.Order> {
     try {
       const response = await apiClient.get<Types.ApiResponse<Types.Order>>(
-        `/orders/number/${encodeURIComponent(orderNumber)}`
+        `/orders/${encodeURIComponent(orderID)}`
       );
       
       if (response.data.data) {
@@ -41,13 +41,13 @@ class CashierAppController {
 
   // Complete counter payment for an order
   async completeCounterPayment(
-    orderNumber: string,
+    orderID: number,
     paymentMethod: string
   ): Promise<Payment> {
     try {
       const response = await apiClient.post<Types.ApiResponse<Payment>>(
-        `/orders/${encodeURIComponent(orderNumber)}/payment/counter`,
-        { paymentMethod }
+        `/payments/process-counter`,
+        { payment_method: paymentMethod , order_id: orderID }
       );
       
       if (response.data.data) {
