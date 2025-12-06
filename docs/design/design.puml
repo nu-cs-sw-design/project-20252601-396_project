@@ -35,13 +35,13 @@ package "Presentation Layer" {
         +addItemToOrder(itemID: int, quantity: int, customizations: String)
         +reviewCurrentOrder(): Order
         +confirmOrder(): Order
-        +payOnSystem(cardInfo: String)
+        +payOnSystem(cardInfo: PaymentInfo)
     }
 
     class CashierAppController {
         +listPendingCounterPayments(): List<Order>
         +findOrder(orderID: int): Order
-        +completeCounterPayment(orderID: int, paymentMethod: String)
+        +completeCounterPayment(orderID: int, paymentMethod: PaymentMethod)
     }
 
     class KitchenAppController {
@@ -61,30 +61,77 @@ package "Presentation Layer" {
 
 ' Domain Layer
 package "Domain Layer" {
-    class OrderingService {
+
+    interface OrderingServiceInterface {
         +createOrder(): Order
-        +addItem(orderID: int, itemID: int, quantity: int, customizations: String)
-        +editItem(orderID: int, itemID: int, quantity: int, customizations: String)
-        +removeItem(orderID: int, itemID: int)
+        +addItem(orderID: int, itemID: int, quantity: int, customizations: String): void
+        +editItem(orderID: int, itemID: int, quantity: int, customizations: String): void
+        +removeItem(orderID: int, itemID: int): void
         +reviewOrder(orderID: int): Order
         +getOrderByID(orderID: int): Order
         +confirmOrder(orderID: int): void
-        -updateOrderTotals(orderID: int): void
+    }
+
+    interface PaymentServiceInterface {
+        +processSystemCardPayment(orderID: int, cardInfo: PaymentInfo): Payment
+        +markPayAtCounter(orderID: int)
+        +completeCounterPayment(orderID: int, paymentMethod: PaymentMethod): Payment
+    }
+
+    interface KitchenServiceInterface {
+        +getOrderQueue(): List<Order>
+        +markInPreparation(orderID: int): void
+        +markReady(orderID: int): void
+        +cancelOrder(orderID: int): void
+    }
+
+    interface MenuServiceInterface {
+        +getMenuCategories(): List<String>
+        +getMenuItemsByCategory(category: String): List<MenuItem>
+        +getItemDetails(itemID: int): MenuItem
+        +addNewMenuItem(name: String, price: double, category: String, description: String): MenuItem
+        +updateExistingMenuItem(itemID: int, price: double, category: String, description: String): void
+        +getMenuItemById(itemID: int): MenuItem
+    }
+
+    interface ReportServiceInterface {
+        +generateDailySalesSummary(date: Date): DailySalesSummary
+    }
+
+    class OrderingService {
+        -orderInterface: OrderInterface
+        -menuInterface: MenuInterface
+
+        +createOrder(): Order
+        +addItem(orderID: int, itemID: int, quantity: int, customizations: String): void
+        +editItem(orderID: int, itemID: int, quantity: int, customizations: String): void
+        +removeItem(orderID: int, itemID: int): void
+        +reviewOrder(orderID: int): Order
+        +getOrderByID(orderID: int): Order
+        +confirmOrder(orderID: int): void
     }
 
     class PaymentService {
-        +processSystemCardPayment(orderID: int, cardInfo: String): Payment
+        -orderInterface: OrderInterface
+        -paymentInterface: PaymentInterface
+
+        +processSystemCardPayment(orderID: int, cardInfo: PaymentInfo): Payment
         +markPayAtCounter(orderID: int)
-        +completeCounterPayment(orderID: int, paymentMethod: String): Payment
+        +completeCounterPayment(orderID: int, paymentMethod: PaymentMethod): Payment
     }
 
     class KitchenService {
+        -orderInterface: OrderInterface
+
         +getOrderQueue(): List<Order>
-        +updateOrderStatus(orderID: int, status: String)
-        +cancelOrder(orderID: int)
+        +markInPreparation(orderID: int): void
+        +markReady(orderID: int): void
+        +cancelOrder(orderID: int): void
     }
 
     class MenuService {
+        -menuInterface: MenuInterface
+
         +getMenuCategories(): List<String>
         +getMenuItemsByCategory(category: String): List<MenuItem>
         +getItemDetails(itemID: int): MenuItem
@@ -94,18 +141,50 @@ package "Domain Layer" {
     }
 
     class ReportService {
+        -orderInterface: OrderInterface
+        -paymentInterface: PaymentInterface
+
         +generateDailySalesSummary(date: Date): DailySalesSummary
     }
 }
 
 ' Datasource Layer
 package "Datasource Layer" {
+    enum OrderStatus {
+        CREATED
+        CONFIRMED
+        IN_PREPARATION
+        READY
+        CANCELLED
+        COMPLETED
+    }
+
+    enum PaymentMethod {
+        CARD
+        CASH_AT_COUNTER
+    }
+
+    enum PaymentStatus {
+        PENDING
+        SUCCESS
+        FAILED
+    }
+    
     class Order {
         -id: String
         -items: List<OrderItem>
-        -status: String
+        -status: OrderStatus
         -createdAt: Date
         -totalAmount: double
+        +addItem(menuItem: MenuItem, quantity: int, customizations: String): void
+        +editItem(itemID: int, quantity: int, customizations: String): void
+        +removeItem(itemID: int): void
+        +markCreated(): void
+        +markConfirmed(): void
+        +markInPreparation(): void
+        +markReady(): void
+        +markCancel(): void
+        +markComplete(): void
         +calculateTotal(): double
     }
 
@@ -129,9 +208,16 @@ package "Datasource Layer" {
         -id: String
         -orderID: int
         -amount: double
-        -method: String
-        -status: String
+        -method: PaymentMethod
+        -status: PaymentStatus
         -paidAt: Date
+    }
+
+    class PaymentInfo {
+        -cardNumber: String
+        -cardHolderName: String
+        -cardExpirationDate: Date
+        -cardCVV: String
     }
 
     class DailySalesSummary {
@@ -143,10 +229,8 @@ package "Datasource Layer" {
 
     interface OrderInterface {
         +save(order: Order): void
-        +get()
         +findById(id: String): Order
-        +findByStatus(status: String): List<Order>
-
+        +findByStatus(status: OrderStatus): List<Order>
     }
 
     interface MenuInterface {
@@ -171,14 +255,19 @@ CustomerUI --> CustomerAppController
 CashierUI  --> CashierAppController
 KitchenUI  --> KitchenAppController
 ManagerUI  --> ManagerAppController
-CustomerAppController --> OrderingService
-CustomerAppController --> PaymentService
-CustomerAppController --> MenuService
-CashierAppController  --> OrderingService
-CashierAppController  --> PaymentService
-KitchenAppController  --> KitchenService
-ManagerAppController  --> MenuService
-ManagerAppController  --> ReportService
+CustomerAppController --> OrderingServiceInterface
+CustomerAppController --> PaymentServiceInterface
+CustomerAppController --> MenuServiceInterface
+CashierAppController  --> OrderingServiceInterface
+CashierAppController  --> PaymentServiceInterface
+KitchenAppController  --> KitchenServiceInterface
+ManagerAppController  --> MenuServiceInterface
+ManagerAppController  --> ReportServiceInterface
+OrderingServiceInterface <|.. OrderingService
+PaymentServiceInterface <|.. PaymentService
+KitchenServiceInterface <|.. KitchenService
+MenuServiceInterface <|.. MenuService
+ReportServiceInterface <|.. ReportService
 Order *-- "many" OrderItem
 OrderItem --> MenuItem
 OrderInterface --> Order
