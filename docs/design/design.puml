@@ -252,17 +252,17 @@ package "Datasource Layer" {
 }
 
 CustomerUI --> CustomerAppController
-CashierUI  --> CashierAppController
-KitchenUI  --> KitchenAppController
-ManagerUI  --> ManagerAppController
+CashierUI --> CashierAppController
+KitchenUI --> KitchenAppController
+ManagerUI --> ManagerAppController
 CustomerAppController --> OrderingServiceInterface
 CustomerAppController --> PaymentServiceInterface
 CustomerAppController --> MenuServiceInterface
-CashierAppController  --> OrderingServiceInterface
-CashierAppController  --> PaymentServiceInterface
-KitchenAppController  --> KitchenServiceInterface
-ManagerAppController  --> MenuServiceInterface
-ManagerAppController  --> ReportServiceInterface
+CashierAppController --> OrderingServiceInterface
+CashierAppController --> PaymentServiceInterface
+KitchenAppController --> KitchenServiceInterface
+ManagerAppController --> MenuServiceInterface
+ManagerAppController --> ReportServiceInterface
 OrderingServiceInterface <|.. OrderingService
 PaymentServiceInterface <|.. PaymentService
 KitchenServiceInterface <|.. KitchenService
@@ -271,24 +271,27 @@ ReportServiceInterface <|.. ReportService
 Order *-- "many" OrderItem
 OrderItem --> MenuItem
 OrderInterface --> Order
-MenuInterface  --> MenuItem
+MenuInterface --> MenuItem
 PaymentInterface --> Payment
 class SqlOrder
 class SqlMenu
 class SqlPayment
 OrderInterface <|.. SqlOrder
-MenuInterface  <|.. SqlMenu
+MenuInterface <|.. SqlMenu
 PaymentInterface <|.. SqlPayment
 SqlOrder --> Database
-SqlMenu  --> Database
+SqlMenu --> Database
 SqlPayment --> Database
 OrderingService --> OrderInterface
 OrderingService --> MenuInterface
-PaymentService  --> OrderInterface
-PaymentService  --> PaymentInterface
-KitchenService  --> OrderInterface
-MenuService     --> MenuInterface
+PaymentService --> OrderInterface
+PaymentService --> PaymentInterface
+KitchenService --> OrderInterface
+MenuService --> MenuInterface
 ReportService --> OrderInterface
 ReportService --> PaymentInterface
+DailySalesSummary --> MenuItem
+CustomerAppController --> PaymentInfo
+PaymentService --> PaymentInfo
 
 @enduml
